@@ -319,10 +319,13 @@
     return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   }
 
+  let audioCtx = null;
+
   function stopStream() {
     if (captureStream) captureStream.getTracks().forEach(t => t.stop());
     captureStream = null;
     clearInterval(timerHandle);
+    if (audioCtx) { audioCtx.close(); audioCtx = null; }
   }
 
   captureBtn.addEventListener('click', async () => {
@@ -348,8 +351,23 @@
     });
     stream.getVideoTracks().forEach(t => t.stop());
 
+    // Amplifie les sons faibles (gain + compresseur) avant l'enregistrement
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioCtx.createMediaStreamSource(new MediaStream(stream.getAudioTracks()));
+    const gainNode = audioCtx.createGain();
+    gainNode.gain.value = 2.2;
+    const compressor = audioCtx.createDynamicsCompressor();
+    compressor.threshold.value = -50;
+    compressor.knee.value = 30;
+    compressor.ratio.value = 12;
+    compressor.attack.value = 0.003;
+    compressor.release.value = 0.25;
+    const dest = audioCtx.createMediaStreamDestination();
+    source.connect(gainNode).connect(compressor).connect(dest);
+    const processedStream = dest.stream;
+
     chunks = [];
-    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+    mediaRecorder = new MediaRecorder(processedStream, { mimeType: 'audio/webm' });
     mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
     mediaRecorder.onstop = async () => {
       stopStream();
