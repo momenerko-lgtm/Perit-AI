@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mot Pour Mot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #edeee7;
+    --paper-raised: #f6f6f1;
+    --ink: #1f2a24;
+    --ink-soft: #445048;
+    --muted: #6d766f;
+    --rule: #cfd2c6;
+    --accent: #28417a;
+    --accent-strong: #1c2f59;
+    --stamp: #8c2a2a;
+    --warn: #8a5a1f;
+    --warn-soft: #f1e6d3;
+    --focus: #28417a;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #14171a; --paper-raised: #1b1f22; --ink: #e9e7de; --ink-soft: #c2c6bd;
+      --muted: #8a9089; --rule: #33383a; --accent: #8ea2d6;
+      --accent-strong: #b3c1e6; --stamp: #d97a7a;
+      --warn: #d9ae66; --warn-soft: #2c2416; --focus: #8ea2d6;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #14171a; --paper-raised: #1b1f22; --ink: #e9e7de; --ink-soft: #c2c6bd;
+    --muted: #8a9089; --rule: #33383a; --accent: #8ea2d6;
+    --accent-strong: #b3c1e6; --stamp: #d97a7a;
+    --warn: #d9ae66; --warn-soft: #2c2416; --focus: #8ea2d6;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { background: var(--paper); }
+
+  body {
+    margin: 0;
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: clamp(20px, 5vw, 64px) 20px 100px;
+  }
+
+  .sheet { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 24px; }
+
+  header.letterhead { border-bottom: 2px solid var(--ink); padding-bottom: 18px; }
+
+  .letterhead h1 {
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(2.1rem, 4vw, 2.9rem);
+    letter-spacing: -0.01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .letterhead p { margin: 6px 0 0; color: var(--muted); font-size: 0.95rem; max-width: 60ch; }
+
+  .panel { background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 3px; }
+
+  .upload-row { display: flex; align-items: center; gap: 14px; padding: 16px; flex-wrap: wrap; }
+
+  input[type="file"] { font-family: "IBM Plex Sans", sans-serif; font-size: 0.88rem; color: var(--ink-soft); max-width: 100%; }
+
+  .panel.text { display: flex; flex-direction: column; min-height: 260px; }
+
+  .panel-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 16px; border-bottom: 1px solid var(--rule);
+  }
+
+  .panel-head .label {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.7rem; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted);
+  }
+
+  .panel-head .count {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.75rem; color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mirror {
+    flex: 1; width: 100%; color: var(--ink);
+    font-family: "IBM Plex Mono", monospace; font-size: 0.92rem; line-height: 1.6;
+    padding: 14px 16px; white-space: pre-wrap; overflow-wrap: break-word;
+    overflow-y: auto;
+  }
+  .mirror:empty::before { content: attr(data-empty); color: var(--muted); }
+  .mirror.thinking::before { content: "Transcription en cours…"; color: var(--muted); font-style: italic; }
+
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+  .status { font-family: "IBM Plex Mono", monospace; font-size: 0.76rem; color: var(--muted); min-height: 1.2em; }
+  .status.error { color: var(--stamp); }
+
+  button {
+    font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 0.86rem; font-weight: 500;
+    padding: 9px 16px; border-radius: 3px; cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .btn-primary { background: var(--accent); border: 1px solid var(--accent); color: var(--paper-raised); }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-strong); border-color: var(--accent-strong); }
+  .btn-ghost { background: transparent; border: 1px solid var(--rule); color: var(--ink-soft); }
+  .btn-ghost:hover:not(:disabled) { border-color: var(--ink-soft); color: var(--ink); }
+
+  .scope {
+    display: flex; gap: 14px; flex-wrap: wrap; background: var(--warn-soft); border: 1px solid var(--warn);
+    border-radius: 3px; padding: 10px 14px; font-size: 0.82rem; color: var(--ink-soft);
+  }
+  .scope b { color: var(--warn); }
+
+  .divider { display: flex; align-items: center; gap: 12px; color: var(--muted); }
+  .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+  .divider span {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase;
+  }
+
+  .rec-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--stamp);
+    margin-right: 6px; animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+  footer.note { text-align: center; color: var(--muted); font-size: 0.76rem; font-family: "IBM Plex Mono", monospace; }
+
+  @media (prefers-reduced-motion: reduce) { button, .rec-dot { transition: none; animation: none; } }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <header class="letterhead">
+    <h1>Mot Pour Mot</h1>
+    <p>Audio d'un autre onglet, ou fichier — transcription brute, telle que rendue par Groq Whisper. Tout tourne en local, ta clé Groq ne quitte jamais ce serveur.</p>
+  </header>
+
+  <div class="panel">
+    <div class="upload-row">
+      <button class="btn-primary" id="capture-btn">Choisir un onglet à écouter</button>
+      <button class="btn-ghost" id="stop-capture-btn" hidden>Arrêter et transcrire</button>
+      <span class="status" id="capture-status"></span>
+    </div>
+  </div>
+
+  <div class="divider"><span>ou</span></div>
+
+  <div class="panel">
+    <div class="upload-row">
+      <input type="file" id="audio-file" accept="audio/*">
+      <button class="btn-primary" id="transcribe-btn">Transcrire le fichier</button>
+      <span class="status" id="transcribe-status"></span>
+    </div>
+  </div>
+
+  <div class="panel text">
+    <div class="panel-head"><span class="label">Sortie brute Groq</span><span class="count" id="count-raw">0 caractère</span></div>
+    <div class="mirror" id="raw-output" data-empty="La transcription brute apparaîtra ici…"></div>
+  </div>
+
+  <div class="row">
+    <span></span>
+    <button class="btn-ghost" id="copy-raw">Copier le résultat</button>
+  </div>
+
+  <div class="scope"><span><b>Capture d'onglet :</b> fonctionne sur Chrome/Edge — dans la fenêtre de partage, choisis l'onglet (pas "Écran entier") et coche "Partager l'audio de l'onglet". Le navigateur redemande à chaque fois, ça ne peut pas être automatisé.</span></div>
+  <div class="scope"><span><b>Non fourni par Groq :</b> séparation des locuteurs, hésitations garanties, mots peu clairs signalés — écoute l'audio en parallèle pour ça.</span></div>
+
+  <footer class="note">Chaque écart entre l'audio et le texte apprend quelque chose de faux au modèle.</footer>
+</div>
+
+<script>
+  const fileInput = document.getElementById('audio-file');
+  const transcribeBtn = document.getElementById('transcribe-btn');
+  const transcribeStatus = document.getElementById('transcribe-status');
+  const captureBtn = document.getElementById('capture-btn');
+  const stopCaptureBtn = document.getElementById('stop-capture-btn');
+  const captureStatus = document.getElementById('capture-status');
+  const rawOutput = document.getElementById('raw-output');
+  const countRaw = document.getElementById('count-raw');
+  const copyRawBtn = document.getElementById('copy-raw');
+
+  function charCount(text) { return `${text.length} caractère${text.length === 1 ? '' : 's'}`; }
+
+  async function transcribeBlob(blob, filename, statusEl) {
+    statusEl.classList.remove('error');
+    statusEl.textContent = 'Transcription en cours…';
+    rawOutput.classList.add('thinking');
+    rawOutput.textContent = '';
+
+    try {
+      const buffer = await blob.arrayBuffer();
+      const res = await fetch('/api/transcribe', {
+        method: 'POST',
+        headers: { 'X-Filename': encodeURIComponent(filename), 'Content-Type': 'application/octet-stream' },
+        body: buffer,
+      });
+      const data = await res.json();
+      rawOutput.classList.remove('thinking');
+      if (!res.ok) throw new Error(data.error || 'Erreur inconnue');
+      rawOutput.textContent = data.text;
+      countRaw.textContent = charCount(data.text);
+      statusEl.textContent = 'Terminé.';
+    } catch (e) {
+      rawOutput.classList.remove('thinking');
+      statusEl.textContent = 'Erreur : ' + e.message;
+      statusEl.classList.add('error');
+    }
+  }
+
+  transcribeBtn.addEventListener('click', async () => {
+    const file = fileInput.files[0];
+    if (!file) { transcribeStatus.textContent = "Choisis un fichier audio d'abord."; transcribeStatus.classList.add('error'); return; }
+    transcribeBtn.disabled = true;
+    await transcribeBlob(file, file.name, transcribeStatus);
+    transcribeBtn.disabled = false;
+  });
+
+  // ---- Capture d'un autre onglet ----
+  let mediaRecorder = null;
+  let captureStream = null;
+  let chunks = [];
+  let recordStart = 0;
+  let timerHandle = null;
+
+  function formatElapsed(ms) {
+    const s = Math.floor(ms / 1000);
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  }
+
+  function stopStream() {
+    if (captureStream) captureStream.getTracks().forEach(t => t.stop());
+    captureStream = null;
+    clearInterval(timerHandle);
+  }
+
+  captureBtn.addEventListener('click', async () => {
+    captureStatus.classList.remove('error');
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+    } catch (e) {
+      captureStatus.textContent = 'Capture annulée.';
+      return;
+    }
+
+    if (stream.getAudioTracks().length === 0) {
+      captureStatus.textContent = "Aucun son partagé — recommence et coche « Partager l'audio de l'onglet ».";
+      captureStatus.classList.add('error');
+      stream.getTracks().forEach(t => t.stop());
+      return;
+    }
+
+    captureStream = stream;
+    stream.getAudioTracks().forEach(track => {
+      track.addEventListener('ended', () => { if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop(); });
+    });
+    stream.getVideoTracks().forEach(t => t.stop());
+
+    chunks = [];
+    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+    mediaRecorder.onstop = async () => {
+      stopStream();
+      captureBtn.hidden = false;
+      stopCaptureBtn.hidden = true;
+      const blob = new Blob(chunks, { type: 'audio/webm' });
+      await transcribeBlob(blob, 'capture-onglet.webm', captureStatus);
+    };
+
+    mediaRecorder.start();
+    recordStart = Date.now();
+    captureBtn.hidden = true;
+    stopCaptureBtn.hidden = false;
+    timerHandle = setInterval(() => {
+      captureStatus.innerHTML = `<span class="rec-dot"></span>enregistrement — ${formatElapsed(Date.now() - recordStart)}`;
+    }, 500);
+  });
+
+  stopCaptureBtn.addEventListener('click', () => {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+  });
+
+  copyRawBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(rawOutput.textContent);
+      const original = copyRawBtn.textContent;
+      copyRawBtn.textContent = 'Copié !';
+      setTimeout(() => { copyRawBtn.textContent = original; }, 1400);
+    } catch (e) {}
+  });
+</script>
+</body>
+</html>
