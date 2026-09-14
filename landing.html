@@ -70,8 +70,6 @@
 
   .upload-row { display: flex; align-items: center; gap: 14px; padding: 16px; flex-wrap: wrap; }
 
-  input[type="file"] { font-family: "IBM Plex Sans", sans-serif; font-size: 0.88rem; color: var(--ink-soft); max-width: 100%; }
-
   .panel.text { display: flex; flex-direction: column; min-height: 260px; }
 
   .panel-head {
@@ -126,12 +124,6 @@
   ul.cheatsheet li { font-size: 0.86rem; color: var(--ink-soft); line-height: 1.5; }
   ul.cheatsheet code { font-family: "IBM Plex Mono", monospace; font-size: 0.85em; background: var(--accent-soft); color: var(--accent-strong); padding: 0 4px; border-radius: 2px; }
 
-  .divider { display: flex; align-items: center; gap: 12px; color: var(--muted); }
-  .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
-  .divider span {
-    font-family: "IBM Plex Mono", monospace; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase;
-  }
-
   .rec-dot {
     display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--stamp);
     margin-right: 6px; animation: pulse 1.4s ease-in-out infinite;
@@ -154,16 +146,6 @@
       <button class="btn-primary" id="capture-btn">Choisir un onglet à écouter</button>
       <button class="btn-ghost" id="stop-capture-btn" hidden>Arrêter et transcrire</button>
       <span class="status" id="capture-status"></span>
-    </div>
-  </div>
-
-  <div class="divider"><span>ou</span></div>
-
-  <div class="panel">
-    <div class="upload-row">
-      <input type="file" id="audio-file" accept="audio/*">
-      <button class="btn-primary" id="transcribe-btn">Transcrire le fichier</button>
-      <span class="status" id="transcribe-status"></span>
     </div>
   </div>
 
@@ -206,9 +188,6 @@
 </div>
 
 <script>
-  const fileInput = document.getElementById('audio-file');
-  const transcribeBtn = document.getElementById('transcribe-btn');
-  const transcribeStatus = document.getElementById('transcribe-status');
   const captureBtn = document.getElementById('capture-btn');
   const stopCaptureBtn = document.getElementById('stop-capture-btn');
   const captureStatus = document.getElementById('capture-status');
@@ -326,14 +305,6 @@
     text = text.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim();
     rawOutput.value = text;
     countRaw.textContent = charCount(text);
-  });
-
-  transcribeBtn.addEventListener('click', async () => {
-    const file = fileInput.files[0];
-    if (!file) { transcribeStatus.textContent = "Choisis un fichier audio d'abord."; transcribeStatus.classList.add('error'); return; }
-    transcribeBtn.disabled = true;
-    await transcribeBlob(file, file.name, transcribeStatus);
-    transcribeBtn.disabled = false;
   });
 
   // ---- Capture d'un autre onglet ----
