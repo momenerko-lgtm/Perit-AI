@@ -309,6 +309,10 @@
   let chunks = [];
   let recordStart = 0;
   let timerHandle = null;
+  let recordedBytes = 0;
+  const MAX_BYTES = 25 * 1024 * 1024;
+  const WARN_BYTES = 20 * 1024 * 1024;
+  const STOP_BYTES = 24 * 1024 * 1024;
 
   function formatElapsed(ms) {
     const s = Math.floor(ms / 1000);
@@ -363,8 +367,17 @@
     const processedStream = dest.stream;
 
     chunks = [];
+    recordedBytes = 0;
     mediaRecorder = new MediaRecorder(processedStream, { mimeType: 'audio/webm' });
-    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) {
+        chunks.push(e.data);
+        recordedBytes += e.data.size;
+        if (recordedBytes >= STOP_BYTES && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+        }
+      }
+    };
     mediaRecorder.onstop = async () => {
       stopStream();
       captureBtn.hidden = false;
@@ -373,12 +386,17 @@
       await transcribeBlob(blob, 'capture-onglet.webm', captureStatus);
     };
 
-    mediaRecorder.start();
+    mediaRecorder.start(1000);
     recordStart = Date.now();
     captureBtn.hidden = true;
     stopCaptureBtn.hidden = false;
     timerHandle = setInterval(() => {
-      captureStatus.innerHTML = `<span class="rec-dot"></span>enregistrement — ${formatElapsed(Date.now() - recordStart)}`;
+      const mb = (recordedBytes / (1024 * 1024)).toFixed(1);
+      const warning = recordedBytes >= WARN_BYTES
+        ? ` — <b>approche la limite de 25 Mo, arrêt automatique bientôt</b>`
+        : '';
+      captureStatus.innerHTML = `<span class="rec-dot"></span>enregistrement — ${formatElapsed(Date.now() - recordStart)} · ${mb} Mo${warning}`;
+      captureStatus.classList.toggle('error', recordedBytes >= WARN_BYTES);
     }, 500);
   });
 
