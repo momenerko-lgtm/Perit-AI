@@ -121,6 +121,10 @@
   }
   .scope b { color: var(--warn); }
 
+  ul.cheatsheet { list-style: none; margin: 0; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+  ul.cheatsheet li { font-size: 0.86rem; color: var(--ink-soft); line-height: 1.5; }
+  ul.cheatsheet code { font-family: "IBM Plex Mono", monospace; font-size: 0.85em; background: var(--accent-soft); color: var(--accent-strong); padding: 0 4px; border-radius: 2px; }
+
   .divider { display: flex; align-items: center; gap: 12px; color: var(--muted); }
   .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
   .divider span {
@@ -174,6 +178,24 @@
 
   <div class="scope"><span><b>Capture d'onglet :</b> fonctionne sur Chrome/Edge — dans la fenêtre de partage, choisis l'onglet (pas "Écran entier") et coche "Partager l'audio de l'onglet". Le navigateur redemande à chaque fois, ça ne peut pas être automatisé.</span></div>
   <div class="scope"><span><b>Non fourni par Groq :</b> séparation des locuteurs, hésitations garanties, mots peu clairs signalés — écoute l'audio en parallèle pour ça.</span></div>
+
+  <div class="panel">
+    <div class="panel-head"><span class="label">Aide-mémoire — à finaliser à la main</span></div>
+    <ul class="cheatsheet">
+      <li><code>[fp]</code> — hésitation qui n'est ni mhm, uh-huh, hmm, euh, euhm, mm-mm, nan-nan, oh, ni ouh</li>
+      <li><code>(())</code> — passage réellement incompréhensible ; tente toujours une hypothèse dedans avant de le laisser vide, ex. <code>((marseille))</code></li>
+      <li><code>{{}}</code> — mot mal prononcé et ambigu (pas un simple accent) ; choisis l'orthographe la plus probable</li>
+      <li><code>-</code> — mot interrompu/tronqué, jamais sur un mot complet</li>
+      <li><code>.</code> — uniquement après une lettre épelée individuellement, ex. <code>d. u. b. o. i. s.</code></li>
+      <li><code>'</code> — apostrophe droite uniquement, jamais l'apostrophe courbe</li>
+      <li><b>tout en minuscules</b> — y compris les noms propres, aucune ponctuation de phrase (, . ? !), nombres et symboles ($ € % &) en toutes lettres</li>
+      <li><b>les 9 hésitations à forme fixe</b> — <code>mhm</code> <code>uh-huh</code> <code>hmm</code> <code>euh</code> <code>euhm</code> <code>mm-mm</code> <code>nan-nan</code> <code>oh</code> <code>ouh</code> ; toute autre hésitation → <code>[fp]</code></li>
+      <li><b>contraction vs grammaire</b> — « p'tit » → petit, « chais pas » → je sais pas (à normaliser) ; mais « je sais pas » reste « je sais pas », jamais « je ne sais pas » (ne pas corriger la grammaire)</li>
+      <li><b>élisions autorisées</b> — <code>ce · de · le · la · ne · je · me · te · que · se · jusque · lorsque · puisque · quoique</code> devant voyelle ou h ; toute autre contraction se remet en forme complète</li>
+      <li><b>acronymes et lettres épelées</b> — prononcé comme un mot → tel quel ; épelé lettre par lettre → point après chaque lettre, ex. <code>d. u. b. o. i. s.</code> (jamais après un mot d'une lettre comme « y »)</li>
+      <li><b>noms propres et marques</b> — transcrire selon la prononciation, pas le logo officiel : <code>Taxi 5</code> → taxi cinq, <code>RTL2</code> → r. t. l. deux, <code>B!gmat</code> → bigmat</li>
+    </ul>
+  </div>
 
   <footer class="note">Chaque écart entre l'audio et le texte apprend quelque chose de faux au modèle.</footer>
 </div>
