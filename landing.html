@@ -90,13 +90,20 @@
   }
 
   .mirror {
-    flex: 1; width: 100%; color: var(--ink);
+    flex: 1; width: 100%; color: var(--ink); border: none; background: transparent; resize: vertical;
     font-family: "IBM Plex Mono", monospace; font-size: 0.92rem; line-height: 1.6;
     padding: 14px 16px; white-space: pre-wrap; overflow-wrap: break-word;
     overflow-y: auto;
   }
-  .mirror:empty::before { content: attr(data-empty); color: var(--muted); }
-  .mirror.thinking::before { content: "Transcription en cours…"; color: var(--muted); font-style: italic; }
+  .mirror:focus { outline: 2px solid var(--focus); outline-offset: -2px; }
+  .mirror::placeholder { color: var(--muted); }
+
+  .edit-toolbar { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 16px 0; }
+  .tag-btn {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; padding: 6px 10px; border-radius: 3px;
+    border: 1px solid var(--rule); background: var(--paper); color: var(--accent-strong); cursor: pointer;
+  }
+  .tag-btn:hover { border-color: var(--accent); }
 
   .row { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
 
@@ -114,12 +121,6 @@
   .btn-primary:hover:not(:disabled) { background: var(--accent-strong); border-color: var(--accent-strong); }
   .btn-ghost { background: transparent; border: 1px solid var(--rule); color: var(--ink-soft); }
   .btn-ghost:hover:not(:disabled) { border-color: var(--ink-soft); color: var(--ink); }
-
-  .scope {
-    display: flex; gap: 14px; flex-wrap: wrap; background: var(--warn-soft); border: 1px solid var(--warn);
-    border-radius: 3px; padding: 10px 14px; font-size: 0.82rem; color: var(--ink-soft);
-  }
-  .scope b { color: var(--warn); }
 
   ul.cheatsheet { list-style: none; margin: 0; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
   ul.cheatsheet li { font-size: 0.86rem; color: var(--ink-soft); line-height: 1.5; }
@@ -167,17 +168,21 @@
   </div>
 
   <div class="panel text">
-    <div class="panel-head"><span class="label">Sortie brute Groq</span><span class="count" id="count-raw">0 caractère</span></div>
-    <div class="mirror" id="raw-output" data-empty="La transcription brute apparaîtra ici…"></div>
+    <div class="panel-head"><span class="label">Sortie brute Groq — modifiable</span><span class="count" id="count-raw">0 caractère</span></div>
+    <div class="edit-toolbar">
+      <button class="tag-btn" data-insert="[fp]">[fp]</button>
+      <button class="tag-btn" data-insert="(())">(())</button>
+      <button class="tag-btn" data-insert="{{}}">{{}}</button>
+      <button class="tag-btn" data-insert="-">-</button>
+      <button class="tag-btn" id="normalize-btn">minuscules + ponctuation + nombres</button>
+    </div>
+    <textarea class="mirror" id="raw-output" placeholder="La transcription brute apparaîtra ici…"></textarea>
   </div>
 
   <div class="row">
     <span></span>
     <button class="btn-ghost" id="copy-raw">Copier le résultat</button>
   </div>
-
-  <div class="scope"><span><b>Capture d'onglet :</b> fonctionne sur Chrome/Edge — dans la fenêtre de partage, choisis l'onglet (pas "Écran entier") et coche "Partager l'audio de l'onglet". Le navigateur redemande à chaque fois, ça ne peut pas être automatisé.</span></div>
-  <div class="scope"><span><b>Non fourni par Groq :</b> séparation des locuteurs, hésitations garanties, mots peu clairs signalés — écoute l'audio en parallèle pour ça.</span></div>
 
   <div class="panel">
     <div class="panel-head"><span class="label">Aide-mémoire — à finaliser à la main</span></div>
@@ -216,8 +221,8 @@
   async function transcribeBlob(blob, filename, statusEl) {
     statusEl.classList.remove('error');
     statusEl.textContent = 'Transcription en cours…';
-    rawOutput.classList.add('thinking');
-    rawOutput.textContent = '';
+    rawOutput.disabled = true;
+    rawOutput.value = '';
 
     try {
       const buffer = await blob.arrayBuffer();
@@ -227,17 +232,101 @@
         body: buffer,
       });
       const data = await res.json();
-      rawOutput.classList.remove('thinking');
+      rawOutput.disabled = false;
       if (!res.ok) throw new Error(data.error || 'Erreur inconnue');
-      rawOutput.textContent = data.text;
-      countRaw.textContent = charCount(data.text);
+      rawOutput.value = data.text;
+      countRaw.textContent = charCount(rawOutput.value);
       statusEl.textContent = 'Terminé.';
     } catch (e) {
-      rawOutput.classList.remove('thinking');
+      rawOutput.disabled = false;
       statusEl.textContent = 'Erreur : ' + e.message;
       statusEl.classList.add('error');
     }
   }
+
+  rawOutput.addEventListener('input', () => { countRaw.textContent = charCount(rawOutput.value); });
+
+  // ---- Marqueurs : insertion au curseur ----
+  document.querySelectorAll('.tag-btn[data-insert]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const insert = btn.dataset.insert;
+      const start = rawOutput.selectionStart, end = rawOutput.selectionEnd;
+      const before = rawOutput.value.slice(0, start), after = rawOutput.value.slice(end);
+      rawOutput.value = before + insert + after;
+      const caret = insert === '(())' || insert === '{{}}' ? start + 2 : start + insert.length;
+      rawOutput.focus();
+      rawOutput.setSelectionRange(caret, caret);
+      countRaw.textContent = charCount(rawOutput.value);
+    });
+  });
+
+  // ---- Nombre -> mot français (usage courant, cardinaux) ----
+  function numberToFrenchWords(num) {
+    num = parseInt(num, 10);
+    if (isNaN(num)) return String(num);
+    if (num === 0) return 'zéro';
+    const units = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf'];
+    const teens = ['dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
+    const tensWords = { 2: 'vingt', 3: 'trente', 4: 'quarante', 5: 'cinquante', 6: 'soixante' };
+
+    function twoDigits(n) {
+      if (n === 0) return '';
+      if (n < 10) return units[n];
+      if (n < 20) return teens[n - 10];
+      if (n < 70) {
+        const ten = Math.floor(n / 10), unit = n % 10;
+        const base = tensWords[ten];
+        if (unit === 0) return base;
+        if (unit === 1) return base + '-et-un';
+        return base + '-' + units[unit];
+      }
+      if (n < 80) {
+        const rem = n - 60;
+        if (rem === 11) return 'soixante-et-onze';
+        return 'soixante-' + (rem < 10 ? units[rem] : teens[rem - 10]);
+      }
+      if (n < 90) {
+        const rem = n - 80;
+        if (rem === 0) return 'quatre-vingts';
+        return 'quatre-vingt-' + units[rem];
+      }
+      const rem = n - 80;
+      return 'quatre-vingt-' + teens[rem - 10];
+    }
+
+    function underThousand(n) {
+      if (n < 100) return twoDigits(n);
+      const h = Math.floor(n / 100), r = n % 100;
+      if (r === 0) return h === 1 ? 'cent' : units[h] + '-cents';
+      return (h === 1 ? 'cent' : units[h] + '-cent') + '-' + twoDigits(r);
+    }
+
+    let n = num, parts = [];
+    const billions = Math.floor(n / 1e9); n %= 1e9;
+    const millions = Math.floor(n / 1e6); n %= 1e6;
+    const thousands = Math.floor(n / 1e3); n %= 1e3;
+    const rest = n;
+    if (billions) parts.push((billions === 1 ? 'un' : underThousand(billions)) + '-milliard' + (billions > 1 ? 's' : ''));
+    if (millions) parts.push((millions === 1 ? 'un' : underThousand(millions)) + '-million' + (millions > 1 ? 's' : ''));
+    if (thousands) parts.push(thousands === 1 ? 'mille' : underThousand(thousands) + '-mille');
+    if (rest) parts.push(underThousand(rest));
+    return parts.join('-');
+  }
+
+  // ---- Normalisation en un clic : minuscules + ponctuation + nombres/symboles ----
+  document.getElementById('normalize-btn').addEventListener('click', () => {
+    let text = rawOutput.value.toLowerCase();
+    text = text.replace(/\d+/g, (m) => numberToFrenchWords(m));
+    text = text.replace(/\$/g, ' dollars').replace(/€/g, ' euros').replace(/%/g, ' pour cent').replace(/&/g, ' et');
+    text = text.replace(/’/g, "'");
+    // garde le point après une lettre épelée isolée (ex. "d. u. b.") ; retire le reste de la ponctuation de phrase
+    text = text.replace(/\b([a-zà-ÿ])\.(\s|$)/g, '§§$1§§$2');
+    text = text.replace(/[,!?.]/g, '');
+    text = text.replace(/§§([a-zà-ÿ])§§/g, '$1.');
+    text = text.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim();
+    rawOutput.value = text;
+    countRaw.textContent = charCount(text);
+  });
 
   transcribeBtn.addEventListener('click', async () => {
     const file = fileInput.files[0];
@@ -314,7 +403,7 @@
 
   copyRawBtn.addEventListener('click', async () => {
     try {
-      await navigator.clipboard.writeText(rawOutput.textContent);
+      await navigator.clipboard.writeText(rawOutput.value);
       const original = copyRawBtn.textContent;
       copyRawBtn.textContent = 'Copié !';
       setTimeout(() => { copyRawBtn.textContent = original; }, 1400);
