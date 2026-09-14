@@ -72,7 +72,7 @@
   .panel.text { display: flex; flex-direction: column; min-height: 260px; }
 
   .panel-head {
-    display: flex; justify-content: space-between; align-items: center;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
     padding: 10px 16px; border-bottom: 1px solid var(--rule);
   }
 
@@ -80,6 +80,8 @@
     font-family: "IBM Plex Mono", monospace; font-size: 0.7rem; letter-spacing: 0.08em;
     text-transform: uppercase; color: var(--muted);
   }
+
+  .panel-head .toolbar-inline { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
   .panel-head .count {
     font-family: "IBM Plex Mono", monospace; font-size: 0.75rem; color: var(--ink-soft);
@@ -95,9 +97,8 @@
   .mirror:focus { outline: 2px solid var(--focus); outline-offset: -2px; }
   .mirror::placeholder { color: var(--muted); }
 
-  .edit-toolbar { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 16px 0; }
   .tag-btn {
-    font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; padding: 6px 12px; border-radius: 16px;
+    font-family: "IBM Plex Mono", monospace; font-size: 0.68rem; padding: 4px 9px; border-radius: 14px;
     border: 1px solid var(--gold); background: var(--gold-soft); color: var(--gold-strong); cursor: pointer;
     font-weight: 600;
   }
@@ -140,19 +141,21 @@
 <body>
 <div class="sheet">
   <div class="panel text">
-    <div class="panel-head"><span class="label">Sortie brute Groq — modifiable</span><span class="count" id="count-raw">0 caractère</span></div>
-    <div class="edit-toolbar">
-      <button class="tag-btn" data-insert="[fp]">[fp]</button>
-      <button class="tag-btn" data-insert="(())">(())</button>
-      <button class="tag-btn" data-insert="{{}}">{{}}</button>
-      <button class="tag-btn" data-insert="-">-</button>
-      <button class="tag-btn" id="normalize-btn">minuscules + ponctuation + nombres</button>
+    <div class="panel-head">
+      <div class="toolbar-inline">
+        <button class="tag-btn" data-insert="[fp]">[fp]</button>
+        <button class="tag-btn" data-insert="(())">(())</button>
+        <button class="tag-btn" data-insert="{{}}">{{}}</button>
+        <button class="tag-btn" data-insert="-">-</button>
+        <button class="tag-btn" id="normalize-btn">minuscules + ponctuation + nombres</button>
+      </div>
+      <span class="count" id="count-raw">0 caractère</span>
     </div>
     <textarea class="mirror" id="raw-output" placeholder="La transcription brute apparaîtra ici…"></textarea>
   </div>
 
   <div class="row">
-    <button class="btn-ghost" id="copy-raw">Copier le résultat</button>
+    <button class="btn-success" id="copy-raw">Copier le résultat</button>
     <div class="upload-row" style="padding: 0;">
       <button class="btn-primary" id="capture-btn">Choisir un onglet à écouter</button>
       <button class="btn-success" id="stop-capture-btn" hidden>Arrêter et transcrire</button>
