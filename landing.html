@@ -6,38 +6,43 @@
 <title>PERIT AI PROJECT</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --paper: #edeee7;
-    --paper-raised: #f6f6f1;
-    --ink: #1f2a24;
-    --ink-soft: #445048;
-    --muted: #6d766f;
-    --rule: #cfd2c6;
-    --accent: #28417a;
-    --accent-strong: #1c2f59;
-    --stamp: #8c2a2a;
-    --warn: #8a5a1f;
-    --warn-soft: #f1e6d3;
-    --ok: #2f6b4f;
-    --ok-strong: #1f4d38;
-    --focus: #28417a;
+    --paper: #f1f2f5;
+    --paper-raised: #ffffff;
+    --ink: #1a2233;
+    --ink-soft: #4a5568;
+    --muted: #6b7280;
+    --rule: #dde1e7;
+    --accent: #2c4d8f;
+    --accent-soft: #e6ecf7;
+    --accent-strong: #1d3763;
+    --gold: #b7862c;
+    --gold-soft: #faf1dc;
+    --gold-strong: #8f6820;
+    --stamp: #ab2a22;
+    --stamp-soft: #fbeae8;
+    --ok: #1f7a4d;
+    --ok-strong: #145c39;
+    --focus: #2c4d8f;
   }
 
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --paper: #14171a; --paper-raised: #1b1f22; --ink: #e9e7de; --ink-soft: #c2c6bd;
-      --muted: #8a9089; --rule: #33383a; --accent: #8ea2d6;
-      --accent-strong: #b3c1e6; --stamp: #d97a7a;
-      --warn: #d9ae66; --warn-soft: #2c2416; --ok: #7fbf9c; --ok-strong: #5da17d; --focus: #8ea2d6;
+      --paper: #12141a; --paper-raised: #1a1d26; --ink: #e6e8ee; --ink-soft: #aab0c0;
+      --muted: #7c8494; --rule: #2a2e3a; --accent: #7fa4e8; --accent-soft: #1f2940;
+      --accent-strong: #a8c2f5; --gold: #e0b45c; --gold-soft: #332a16; --gold-strong: #f2cc82;
+      --stamp: #e2938c; --stamp-soft: #2c1e1d;
+      --ok: #6fcf9e; --ok-strong: #96e0b8; --focus: #7fa4e8;
     }
   }
   :root[data-theme="dark"] {
-    --paper: #14171a; --paper-raised: #1b1f22; --ink: #e9e7de; --ink-soft: #c2c6bd;
-    --muted: #8a9089; --rule: #33383a; --accent: #8ea2d6;
-    --accent-strong: #b3c1e6; --stamp: #d97a7a;
-    --warn: #d9ae66; --warn-soft: #2c2416; --ok: #7fbf9c; --ok-strong: #5da17d; --focus: #8ea2d6;
+    --paper: #12141a; --paper-raised: #1a1d26; --ink: #e6e8ee; --ink-soft: #aab0c0;
+    --muted: #7c8494; --rule: #2a2e3a; --accent: #7fa4e8; --accent-soft: #1f2940;
+    --accent-strong: #a8c2f5; --gold: #e0b45c; --gold-soft: #332a16; --gold-strong: #f2cc82;
+    --stamp: #e2938c; --stamp-soft: #2c1e1d;
+    --ok: #6fcf9e; --ok-strong: #96e0b8; --focus: #7fa4e8;
   }
 
   * { box-sizing: border-box; }
@@ -51,11 +56,16 @@
     display: flex;
     justify-content: center;
     padding: clamp(20px, 5vw, 64px) 20px 100px;
+    background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 6%, var(--paper)) 0%, var(--paper) 45%, color-mix(in srgb, var(--gold) 8%, var(--paper)) 100%);
   }
 
-  .sheet { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 24px; }
+  .sheet { width: 100%; max-width: 1400px; display: flex; flex-direction: column; gap: 24px; }
 
-  .panel { background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 3px; }
+  .panel {
+    background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04); border-top: 3px solid var(--accent); overflow: hidden;
+  }
+  .panel.gold-top { border-top-color: var(--gold); }
 
   .upload-row { display: flex; align-items: center; gap: 14px; padding: 16px; flex-wrap: wrap; }
 
@@ -87,10 +97,11 @@
 
   .edit-toolbar { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 16px 0; }
   .tag-btn {
-    font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; padding: 6px 10px; border-radius: 3px;
-    border: 1px solid var(--rule); background: var(--paper); color: var(--accent-strong); cursor: pointer;
+    font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; padding: 6px 12px; border-radius: 16px;
+    border: 1px solid var(--gold); background: var(--gold-soft); color: var(--gold-strong); cursor: pointer;
+    font-weight: 600;
   }
-  .tag-btn:hover { border-color: var(--accent); }
+  .tag-btn:hover { background: var(--gold); color: var(--paper-raised); }
 
   .row { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
 
@@ -99,7 +110,7 @@
 
   button {
     font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 0.86rem; font-weight: 500;
-    padding: 9px 16px; border-radius: 3px; cursor: pointer;
+    padding: 9px 16px; border-radius: 16px; cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   }
   button:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -111,9 +122,9 @@
   .btn-success { background: var(--ok); border: 1px solid var(--ok); color: var(--paper-raised); }
   .btn-success:hover:not(:disabled) { background: var(--ok-strong); border-color: var(--ok-strong); }
 
-  ul.cheatsheet { list-style: none; margin: 0; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
-  ul.cheatsheet li { font-size: 0.86rem; color: var(--ink-soft); line-height: 1.5; }
-  ul.cheatsheet code { font-family: "IBM Plex Mono", monospace; font-size: 0.85em; background: var(--accent-soft); color: var(--accent-strong); padding: 0 4px; border-radius: 2px; }
+  ul.cheatsheet { list-style: none; margin: 0; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+  ul.cheatsheet li { font-size: 1.05rem; color: var(--ink-soft); line-height: 1.6; }
+  ul.cheatsheet code { font-family: "IBM Plex Mono", monospace; font-size: 0.92em; background: var(--gold-soft); color: var(--gold-strong); padding: 1px 6px; border-radius: 6px; }
 
   .rec-dot {
     display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--stamp);
@@ -128,14 +139,6 @@
 </head>
 <body>
 <div class="sheet">
-  <div class="panel">
-    <div class="upload-row">
-      <button class="btn-primary" id="capture-btn">Choisir un onglet à écouter</button>
-      <button class="btn-success" id="stop-capture-btn" hidden>Arrêter et transcrire</button>
-      <span class="status" id="capture-status"></span>
-    </div>
-  </div>
-
   <div class="panel text">
     <div class="panel-head"><span class="label">Sortie brute Groq — modifiable</span><span class="count" id="count-raw">0 caractère</span></div>
     <div class="edit-toolbar">
@@ -149,11 +152,15 @@
   </div>
 
   <div class="row">
-    <span></span>
     <button class="btn-ghost" id="copy-raw">Copier le résultat</button>
+    <div class="upload-row" style="padding: 0;">
+      <button class="btn-primary" id="capture-btn">Choisir un onglet à écouter</button>
+      <button class="btn-success" id="stop-capture-btn" hidden>Arrêter et transcrire</button>
+      <span class="status" id="capture-status"></span>
+    </div>
   </div>
 
-  <div class="panel">
+  <div class="panel gold-top">
     <div class="panel-head"><span class="label">Aide-mémoire — à finaliser à la main</span></div>
     <ul class="cheatsheet">
       <li><code>[fp]</code> — hésitation qui n'est ni mhm, uh-huh, hmm, euh, euhm, mm-mm, nan-nan, oh, ni ouh</li>
