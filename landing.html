@@ -20,6 +20,8 @@
     --stamp: #8c2a2a;
     --warn: #8a5a1f;
     --warn-soft: #f1e6d3;
+    --ok: #2f6b4f;
+    --ok-strong: #1f4d38;
     --focus: #28417a;
   }
 
@@ -28,14 +30,14 @@
       --paper: #14171a; --paper-raised: #1b1f22; --ink: #e9e7de; --ink-soft: #c2c6bd;
       --muted: #8a9089; --rule: #33383a; --accent: #8ea2d6;
       --accent-strong: #b3c1e6; --stamp: #d97a7a;
-      --warn: #d9ae66; --warn-soft: #2c2416; --focus: #8ea2d6;
+      --warn: #d9ae66; --warn-soft: #2c2416; --ok: #7fbf9c; --ok-strong: #5da17d; --focus: #8ea2d6;
     }
   }
   :root[data-theme="dark"] {
     --paper: #14171a; --paper-raised: #1b1f22; --ink: #e9e7de; --ink-soft: #c2c6bd;
     --muted: #8a9089; --rule: #33383a; --accent: #8ea2d6;
     --accent-strong: #b3c1e6; --stamp: #d97a7a;
-    --warn: #d9ae66; --warn-soft: #2c2416; --focus: #8ea2d6;
+    --warn: #d9ae66; --warn-soft: #2c2416; --ok: #7fbf9c; --ok-strong: #5da17d; --focus: #8ea2d6;
   }
 
   * { box-sizing: border-box; }
@@ -52,19 +54,6 @@
   }
 
   .sheet { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 24px; }
-
-  header.letterhead { border-bottom: 2px solid var(--ink); padding-bottom: 18px; }
-
-  .letterhead h1 {
-    font-family: "Fraunces", Georgia, serif;
-    font-weight: 600;
-    font-size: clamp(2.1rem, 4vw, 2.9rem);
-    letter-spacing: -0.01em;
-    margin: 0;
-    text-wrap: balance;
-  }
-
-  .letterhead p { margin: 6px 0 0; color: var(--muted); font-size: 0.95rem; max-width: 60ch; }
 
   .panel { background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 3px; }
 
@@ -119,6 +108,8 @@
   .btn-primary:hover:not(:disabled) { background: var(--accent-strong); border-color: var(--accent-strong); }
   .btn-ghost { background: transparent; border: 1px solid var(--rule); color: var(--ink-soft); }
   .btn-ghost:hover:not(:disabled) { border-color: var(--ink-soft); color: var(--ink); }
+  .btn-success { background: var(--ok); border: 1px solid var(--ok); color: var(--paper-raised); }
+  .btn-success:hover:not(:disabled) { background: var(--ok-strong); border-color: var(--ok-strong); }
 
   ul.cheatsheet { list-style: none; margin: 0; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
   ul.cheatsheet li { font-size: 0.86rem; color: var(--ink-soft); line-height: 1.5; }
@@ -137,14 +128,10 @@
 </head>
 <body>
 <div class="sheet">
-  <header class="letterhead">
-    <h1>PERIT AI PROJECT</h1>
-  </header>
-
   <div class="panel">
     <div class="upload-row">
       <button class="btn-primary" id="capture-btn">Choisir un onglet à écouter</button>
-      <button class="btn-ghost" id="stop-capture-btn" hidden>Arrêter et transcrire</button>
+      <button class="btn-success" id="stop-capture-btn" hidden>Arrêter et transcrire</button>
       <span class="status" id="capture-status"></span>
     </div>
   </div>
@@ -289,7 +276,7 @@
     if (millions) parts.push((millions === 1 ? 'un' : underThousand(millions)) + '-million' + (millions > 1 ? 's' : ''));
     if (thousands) parts.push(thousands === 1 ? 'mille' : underThousand(thousands) + '-mille');
     if (rest) parts.push(underThousand(rest));
-    return parts.join('-');
+    return parts.join('-').replace(/-/g, ' ');
   }
 
   // ---- Normalisation en un clic : minuscules + ponctuation + nombres/symboles ----
