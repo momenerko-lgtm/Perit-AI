@@ -1,0 +1,385 @@
+<title>Mise En Conformité</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #edeee7;
+    --paper-raised: #f6f6f1;
+    --ink: #1f2a24;
+    --ink-soft: #445048;
+    --muted: #6d766f;
+    --rule: #cfd2c6;
+    --accent: #28417a;
+    --accent-soft: #dde3f0;
+    --accent-strong: #1c2f59;
+    --stamp: #8c2a2a;
+    --warn: #8a5a1f;
+    --warn-soft: #f1e6d3;
+    --focus: #28417a;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #14171a;
+      --paper-raised: #1b1f22;
+      --ink: #e9e7de;
+      --ink-soft: #c2c6bd;
+      --muted: #8a9089;
+      --rule: #33383a;
+      --accent: #8ea2d6;
+      --accent-soft: #212a3d;
+      --accent-strong: #b3c1e6;
+      --stamp: #d97a7a;
+      --warn: #d9ae66;
+      --warn-soft: #2c2416;
+      --focus: #8ea2d6;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #14171a;
+    --paper-raised: #1b1f22;
+    --ink: #e9e7de;
+    --ink-soft: #c2c6bd;
+    --muted: #8a9089;
+    --rule: #33383a;
+    --accent: #8ea2d6;
+    --accent-soft: #212a3d;
+    --accent-strong: #b3c1e6;
+    --stamp: #d97a7a;
+    --warn: #d9ae66;
+    --warn-soft: #2c2416;
+    --focus: #8ea2d6;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: clamp(20px, 5vw, 64px) 20px;
+  }
+
+  .sheet {
+    width: 100%;
+    max-width: 960px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  header.letterhead {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 18px;
+  }
+
+  .letterhead h1 {
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(2rem, 4vw, 2.7rem);
+    letter-spacing: -0.01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .letterhead p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 0.95rem;
+    max-width: 60ch;
+  }
+
+  .scope {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: var(--warn-soft);
+    border: 1px solid var(--warn);
+    border-radius: 3px;
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+
+  .scope b { color: var(--warn); }
+
+  .panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 720px) {
+    .panels { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    min-height: 380px;
+  }
+
+  .panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .panel-head .label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .panel-head .count {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  textarea, .mirror {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.95rem;
+    line-height: 1.65;
+    padding: 16px;
+    resize: none;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+  }
+
+  textarea:focus { outline: 2px solid var(--focus); outline-offset: -2px; }
+  textarea::placeholder { color: var(--muted); }
+
+  .mirror { overflow-y: auto; }
+  .mirror:empty::before { content: attr(data-empty); color: var(--muted); }
+  .mirror.thinking::before { content: "Traitement en cours…"; color: var(--muted); font-style: italic; }
+
+  footer.actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--rule);
+    padding-top: 18px;
+  }
+
+  .status {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    min-height: 1.2em;
+  }
+
+  .status.error { color: var(--stamp); }
+
+  .btns { display: flex; gap: 10px; }
+
+  button {
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    padding: 10px 18px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .btn-primary { background: var(--accent); border: 1px solid var(--accent); color: var(--paper-raised); }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-strong); border-color: var(--accent-strong); }
+
+  .btn-ghost { background: transparent; border: 1px solid var(--rule); color: var(--ink-soft); }
+  .btn-ghost:hover:not(:disabled) { border-color: var(--ink-soft); color: var(--ink); }
+
+  @media (prefers-reduced-motion: reduce) { button { transition: none; } }
+</style>
+
+<div class="sheet">
+  <header class="letterhead">
+    <h1>Mise En Conformité</h1>
+    <p>Colle la transcription brute d'un moteur de reconnaissance vocale (Groq Whisper ou autre) : Claude applique les règles de forme du guideline verbatim, sans jamais reformuler ou corriger le fond.</p>
+  </header>
+
+  <div class="scope">
+    <span><b>Fait ici :</b> minuscules, ponctuation retirée, nombres en lettres, symboles en toutes lettres, contractions populaires reformées, apostrophes droites, hésitations uniformisées.</span>
+    <span><b>Ne peut pas être fait ici :</b> catégorie de l'audio, caractéristiques, locuteurs, (()) et {{}} — ça demande d'écouter le son, pas seulement de lire le texte.</span>
+  </div>
+
+  <div class="panels">
+    <div class="panel">
+      <div class="panel-head">
+        <span class="label">Transcription brute</span>
+        <span class="count" id="count-in">0 caractère</span>
+      </div>
+      <textarea id="input" placeholder="Colle ici la sortie brute de Groq Whisper (ou de tout autre moteur ASR)…" spellcheck="false" autocomplete="off"></textarea>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <span class="label">Mise en conformité</span>
+        <span class="count" id="count-out">0 caractère</span>
+      </div>
+      <div class="mirror" id="output" data-empty="Le texte mis en forme apparaîtra ici…"></div>
+    </div>
+  </div>
+
+  <footer class="actions">
+    <span class="status" id="status"></span>
+    <div class="btns">
+      <button class="btn-ghost" id="stop" hidden>Arrêter</button>
+      <button class="btn-ghost" id="copy">Copier le résultat</button>
+      <button class="btn-primary" id="run">Mettre en conformité</button>
+    </div>
+  </footer>
+</div>
+
+<script>
+  const RULES = `Tu appliques strictement des règles de FORME à une transcription audio française déjà écrite. Tu ne juges rien que le texte ne montre pas : n'invente jamais un marqueur (()) ou {{}} qui n'était pas déjà présent, ne devine pas qui parle, ne réécoute rien (tu n'as pas le son). Ne reformule aucune phrase, ne corrige aucune faute de construction, ne supprime aucune répétition ou hésitation réelle : ce sont des règles de mise en forme, pas de correction.
+
+Règles à appliquer :
+1. Tout le texte en minuscules, y compris les noms propres.
+2. Aucune ponctuation de phrase (virgule, point, point d'interrogation, point d'exclamation) — sauf les marqueurs autorisés listés au point 8.
+3. Conserve tous les accents français et la cédille.
+4. Écris les symboles $ € % & en toutes lettres (ex: 50$ -> cinquante dollars).
+5. Écris tous les nombres en toutes lettres (87 -> quatre-vingt-sept ; 306 épelé -> trois zéro six).
+6. Ne corrige jamais la grammaire du locuteur, ne supprime jamais une répétition ou une hésitation réellement prononcée, ne rallonge jamais une lettre pour un son prolongé.
+7. Uniformise une hésitation déjà présente vers l'une de ces formes fixes si son sens correspond clairement : mhm, uh-huh, hmm, euh, euhm, mm-mm, nan-nan, oh, ouh. Toute autre hésitation qui ne correspond à aucune de ces formes devient [fp]. Ne mets jamais [fp] deux fois de suite pour la même pause.
+8. Marqueurs autorisés, à conserver tels quels s'ils sont déjà présents dans le texte source, sans en ajouter de nouveaux : [fp] (())  {{mot}}  -  .  '  — seule l'apostrophe droite ' est utilisée.
+9. Remets les contractions populaires sous leur forme standard (p'tit -> petit, chais pas -> je sais pas), mais garde les élisions standards telles quelles (j'ai, l'homme, qu'il).
+10. Pour un acronyme manifestement épelé lettre par lettre dans le texte source, mets un point après chaque lettre (ex: d u b o i s -> d. u. b. o. i. s.), sauf un vrai mot d'une seule lettre comme "y".
+
+Ne retourne QUE le texte transformé, sans aucune explication, sans guillemets autour, sans commentaire avant ou après.
+
+Texte à transformer :
+`;
+
+  const input = document.getElementById('input');
+  const output = document.getElementById('output');
+  const countIn = document.getElementById('count-in');
+  const countOut = document.getElementById('count-out');
+  const status = document.getElementById('status');
+  const runBtn = document.getElementById('run');
+  const stopBtn = document.getElementById('stop');
+  const copyBtn = document.getElementById('copy');
+
+  let sample = null;
+  let ctl = null;
+
+  const ERROR_COPY = {
+    invalid_request: "Requête invalide — réessaie.",
+    prompt_too_large: "Le texte est trop long, réduis-le et réessaie.",
+    not_granted: "Tu dois autoriser cette page à utiliser Claude pour continuer.",
+    sampling_disabled: "Claude n'est pas disponible pour ce compte ici.",
+    not_declared: "Fonction indisponible sur cette page.",
+    capability_disabled: "Fonction indisponible pour cette vue.",
+    capability_removed: "Fonction indisponible sur cette version.",
+    rate_limited: "Trop de requêtes pour l'instant — réessaie dans un instant.",
+    session_expired: "Ta session a expiré, reconnecte-toi puis réessaie.",
+    refused: "Claude a refusé cette requête — modifie le texte et réessaie.",
+    empty_completion: "Aucune réponse générée — réessaie avec un texte plus court.",
+    upstream_error: "Erreur temporaire du service — réessaie.",
+  };
+
+  function charCount(text) {
+    return `${text.length} caractère${text.length === 1 ? '' : 's'}`;
+  }
+
+  function refreshCounts() {
+    countIn.textContent = charCount(input.value);
+    countOut.textContent = charCount(output.textContent);
+  }
+
+  function setBusy(busy) {
+    runBtn.disabled = busy;
+    stopBtn.hidden = !busy;
+  }
+
+  input.addEventListener('input', refreshCounts);
+
+  copyBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(output.textContent);
+      const original = copyBtn.textContent;
+      copyBtn.textContent = 'Copié !';
+      setTimeout(() => { copyBtn.textContent = original; }, 1400);
+    } catch (e) {
+      output.focus();
+    }
+  });
+
+  stopBtn.addEventListener('click', () => {
+    ctl?.abort();
+  });
+
+  runBtn.addEventListener('click', async () => {
+    const text = input.value.trim();
+    if (!text) return;
+
+    if (!sample) {
+      sample = await claude.use('sample').catch(() => null);
+      if (!sample) {
+        status.textContent = 'Cette fonctionnalité nécessite un client claude.ai — indisponible ici.';
+        status.classList.add('error');
+        return;
+      }
+    }
+
+    ctl = new AbortController();
+    setBusy(true);
+    status.textContent = '';
+    status.classList.remove('error');
+    output.classList.add('thinking');
+    output.textContent = '';
+
+    try {
+      const { text: result, truncated } = await sample(RULES + text, {
+        signal: ctl.signal,
+        modelTier: 'default',
+        cache: false,
+        onText: ({ text: whole }) => {
+          output.classList.remove('thinking');
+          output.textContent = whole;
+          refreshCounts();
+        },
+      });
+      output.textContent = result;
+      refreshCounts();
+      status.textContent = truncated ? 'Réponse tronquée — traite un texte plus court.' : 'Terminé.';
+    } catch (e) {
+      output.classList.remove('thinking');
+      if (e.text) { output.textContent = e.text; refreshCounts(); }
+      if (e.code !== 'cancelled') {
+        status.textContent = ERROR_COPY[e.code] || 'Une erreur est survenue — réessaie.';
+        status.classList.add('error');
+      } else {
+        status.textContent = 'Arrêté.';
+      }
+    } finally {
+      setBusy(false);
+    }
+  });
+
+  refreshCounts();
+</script>

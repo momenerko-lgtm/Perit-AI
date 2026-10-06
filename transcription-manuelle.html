@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transcription Manuelle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #edeee7; --paper-raised: #f6f6f1; --ink: #1f2a24; --ink-soft: #445048;
+    --muted: #6d766f; --rule: #cfd2c6; --accent: #28417a; --accent-soft: #dde3f0;
+    --accent-strong: #1c2f59; --stamp: #8c2a2a; --stamp-soft: #f4e2e2;
+    --ok: #2f6b4f; --ok-soft: #dcece2; --focus: #28417a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #14171a; --paper-raised: #1b1f22; --ink: #e9e7de; --ink-soft: #c2c6bd;
+      --muted: #8a9089; --rule: #33383a; --accent: #8ea2d6; --accent-soft: #212a3d;
+      --accent-strong: #b3c1e6; --stamp: #d97a7a; --stamp-soft: #2c1c1c;
+      --ok: #7fbf9c; --ok-soft: #1c2f27; --focus: #8ea2d6;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #14171a; --paper-raised: #1b1f22; --ink: #e9e7de; --ink-soft: #c2c6bd;
+    --muted: #8a9089; --rule: #33383a; --accent: #8ea2d6; --accent-soft: #212a3d;
+    --accent-strong: #b3c1e6; --stamp: #d97a7a; --stamp-soft: #2c1c1c;
+    --ok: #7fbf9c; --ok-soft: #1c2f27; --focus: #8ea2d6;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { background: var(--paper); }
+  body {
+    margin: 0; color: var(--ink); font-family: "IBM Plex Sans", system-ui, sans-serif;
+    min-height: 100vh; display: flex; justify-content: center; padding: clamp(20px, 5vw, 64px) 20px 100px;
+  }
+  .sheet { width: 100%; max-width: 860px; display: flex; flex-direction: column; gap: 26px; }
+
+  header.letterhead { border-bottom: 2px solid var(--ink); padding-bottom: 18px; }
+  .letterhead h1 { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: clamp(2.1rem, 4vw, 2.9rem); letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+  .letterhead p { margin: 6px 0 0; color: var(--muted); font-size: 0.95rem; max-width: 62ch; }
+
+  .banner-ok {
+    display: flex; gap: 10px; align-items: flex-start; background: var(--ok-soft); border: 1px solid var(--ok);
+    color: var(--ok); border-radius: 3px; padding: 10px 14px; font-size: 0.82rem;
+  }
+
+  section.step { display: flex; flex-direction: column; gap: 12px; }
+  .step-head { display: flex; align-items: baseline; gap: 10px; }
+  .step-head .letter {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; color: var(--accent);
+    border: 1px solid var(--accent); border-radius: 2px; padding: 1px 7px;
+  }
+  .step-head h2 { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: 1.3rem; margin: 0; }
+
+  .panel { background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 3px; padding: 16px; }
+  .panel.disabled { opacity: 0.45; pointer-events: none; }
+
+  audio { width: 100%; }
+  .speed-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .speed-row .tag { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .speed-btn {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; padding: 5px 10px; border-radius: 3px;
+    border: 1px solid var(--rule); background: transparent; color: var(--ink-soft); cursor: pointer;
+  }
+  .speed-btn.active { background: var(--accent); border-color: var(--accent); color: var(--paper-raised); }
+
+  input[type="file"] { font-family: "IBM Plex Sans", sans-serif; font-size: 0.88rem; color: var(--ink-soft); max-width: 100%; }
+
+  .radio-list, .check-list { display: flex; flex-direction: column; gap: 2px; }
+  .radio-list label, .check-list label {
+    display: flex; align-items: flex-start; gap: 10px; padding: 7px 8px; border-radius: 3px; font-size: 0.9rem; cursor: pointer;
+  }
+  .radio-list label:hover, .check-list label:hover { background: var(--accent-soft); }
+  .radio-list input, .check-list input { margin-top: 3px; }
+  .radio-list .desc, .check-list .desc { color: var(--muted); font-size: 0.8rem; display: block; }
+
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .tag-btn {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; padding: 6px 10px; border-radius: 3px;
+    border: 1px solid var(--rule); background: var(--paper); color: var(--accent-strong); cursor: pointer;
+  }
+  .tag-btn:hover { border-color: var(--accent); }
+
+  textarea#transcription {
+    width: 100%; min-height: 240px; font-family: "IBM Plex Mono", monospace; font-size: 0.95rem; line-height: 1.65;
+    padding: 14px; border: 1px solid var(--rule); border-radius: 3px; background: var(--paper); color: var(--ink); resize: vertical;
+  }
+  textarea#transcription:focus { outline: 2px solid var(--focus); outline-offset: -2px; }
+
+  .lint-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .lint {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.76rem; padding: 5px 10px; border-radius: 3px;
+    border: 1px solid var(--rule); color: var(--muted); display: flex; align-items: center; gap: 6px;
+  }
+  .lint.bad { border-color: var(--stamp); color: var(--stamp); background: var(--stamp-soft); }
+  .lint.ok { border-color: var(--ok); color: var(--ok); background: var(--ok-soft); }
+
+  .speaker-count-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .count-btn {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.85rem; padding: 7px 14px; border-radius: 3px;
+    border: 1px solid var(--rule); background: var(--paper); color: var(--ink-soft); cursor: pointer;
+  }
+  .count-btn.active { background: var(--accent); border-color: var(--accent); color: var(--paper-raised); }
+
+  .speaker-cards { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+  .speaker-card { border: 1px solid var(--rule); border-radius: 3px; padding: 12px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; background: var(--paper); }
+  .speaker-card .name { font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; color: var(--muted); min-width: 90px; }
+  select {
+    font-family: "IBM Plex Sans", sans-serif; font-size: 0.85rem; padding: 6px 10px; border-radius: 3px;
+    border: 1px solid var(--rule); background: var(--paper); color: var(--ink);
+  }
+
+  details.ref { border: 1px solid var(--rule); border-radius: 3px; background: var(--paper-raised); }
+  details.ref summary { cursor: pointer; padding: 10px 14px; font-weight: 500; font-size: 0.9rem; font-family: "Fraunces", Georgia, serif; }
+  details.ref .ref-body { padding: 0 14px 14px; font-size: 0.85rem; color: var(--ink-soft); }
+  .ref-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 6px; }
+  .ref-table td, .ref-table th { border: 1px solid var(--rule); padding: 5px 8px; text-align: left; }
+  .ref-table th { background: var(--accent-soft); font-weight: 600; }
+  code { font-family: "IBM Plex Mono", monospace; font-size: 0.85em; background: var(--accent-soft); color: var(--accent-strong); padding: 0 4px; border-radius: 2px; }
+
+  .checklist { display: flex; flex-direction: column; gap: 2px; }
+  .checklist .item { display: flex; align-items: flex-start; gap: 10px; padding: 8px; border-radius: 3px; font-size: 0.88rem; }
+  .checklist .item:hover { background: var(--accent-soft); }
+  .checklist input[type="checkbox"] {
+    appearance: none; -webkit-appearance: none; width: 17px; height: 17px; flex: none; margin-top: 2px;
+    border: 1.5px solid var(--ink-soft); border-radius: 3px; background: var(--paper); cursor: pointer; position: relative;
+  }
+  .checklist input[type="checkbox"]:checked { background: var(--ok); border-color: var(--ok); }
+  .checklist input[type="checkbox"]:checked::after {
+    content: ""; position: absolute; left: 5px; top: 1px; width: 4px; height: 8px;
+    border: solid var(--paper-raised); border-width: 0 2px 2px 0; transform: rotate(45deg);
+  }
+  .checklist .item.checked label { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--rule); }
+
+  footer.note { text-align: center; color: var(--muted); font-size: 0.76rem; font-family: "IBM Plex Mono", monospace; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <header class="letterhead">
+    <h1>Transcription Manuelle</h1>
+    <p>Poste de travail conforme au guideline du client : tu écoutes, tu tapes toi-même. Aucune reconnaissance vocale automatique — cette page fonctionne sans serveur, sans internet, en local.</p>
+  </header>
+
+  <div class="banner-ok"><span>✓ Aucun appel réseau, aucune clé, rien à lancer — ouvre simplement ce fichier dans ton navigateur.</span></div>
+
+  <section class="step">
+    <div class="step-head"><span class="letter">1</span><h2>Écoute</h2></div>
+    <div class="panel">
+      <input type="file" id="audio-file" accept="audio/*">
+      <audio id="player" controls style="margin-top:12px;"></audio>
+      <div class="speed-row">
+        <span class="tag">Vitesse</span>
+        <button class="speed-btn" data-speed="0.5">0.5×</button>
+        <button class="speed-btn" data-speed="0.75">0.75×</button>
+        <button class="speed-btn active" data-speed="1">1×</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="step">
+    <div class="step-head"><span class="letter">2</span><h2>Catégorie de l'audio entier</h2></div>
+    <div class="panel">
+      <div class="radio-list" id="q1-list">
+        <label><input type="radio" name="q1" value="pas-audio"><span>Pas d'audio <span class="desc">le fichier est vide</span></span></label>
+        <label><input type="radio" name="q1" value="pas-voix"><span>Pas de voix <span class="desc">aucune parole, aucun autre son codable</span></span></label>
+        <label><input type="radio" name="q1" value="sensible"><span>Contient du contenu sensible <span class="desc">jurons, contenu explicite</span></span></label>
+        <label><input type="radio" name="q1" value="synthetique"><span>Contient de la parole synthétique <span class="desc">voix générée/TTS, même partielle</span></span></label>
+        <label><input type="radio" name="q1" value="langue-non-cible"><span>Principalement une langue non cible <span class="desc">majoritairement/entièrement dans une autre langue</span></span></label>
+        <label><input type="radio" name="q1" value="aucune" checked><span>Aucune <span class="desc">contient de la parole à transcrire — continuer</span></span></label>
+      </div>
+    </div>
+  </section>
+
+  <section class="step" id="q2-section">
+    <div class="step-head"><span class="letter">3</span><h2>Caractéristiques présentes</h2></div>
+    <div class="panel">
+      <div class="check-list">
+        <label><input type="checkbox" value="voix-superposees"><span>Voix superposées <span class="desc">plusieurs locuteurs simultanés, compréhensibles</span></span></label>
+        <label><input type="checkbox" value="conversations-croisees"><span>Conversations croisées <span class="desc">plusieurs voix simultanées, incompréhensibles</span></span></label>
+        <label><input type="checkbox" value="rire"><span>Rire <span class="desc">d'un locuteur identifié</span></span></label>
+        <label><input type="checkbox" value="bruit-humain"><span>Bruit humain <span class="desc">toux, pleurs, soupir, chant… (pas la respiration normale)</span></span></label>
+        <label><input type="checkbox" value="arriere-plan"><span>Parole en arrière-plan <span class="desc">locuteur non identifiable</span></span></label>
+        <label><input type="checkbox" value="bruit-fond"><span>Bruit de fond excessif <span class="desc">persistant sur une grande partie de l'audio</span></span></label>
+        <label><input type="checkbox" value="artefact"><span>Artefact audio <span class="desc">bruit technique bref et isolé</span></span></label>
+        <label><input type="checkbox" value="corrompu"><span>Audio corrompu <span class="desc">déformation qui empêche de transcrire</span></span></label>
+        <label><input type="checkbox" value="langue-non-cible-q2"><span>Langue non cible <span class="desc">passage transcriptible dans une autre langue</span></span></label>
+      </div>
+    </div>
+  </section>
+
+  <section class="step" id="transcription-section">
+    <div class="step-head"><span class="letter">4</span><h2>Transcription</h2></div>
+    <div class="panel">
+      <div class="toolbar">
+        <button class="tag-btn" data-insert="[fp]">[fp]</button>
+        <button class="tag-btn" data-insert="(())">(())</button>
+        <button class="tag-btn" data-insert="{{}}">{{}}</button>
+        <button class="tag-btn" data-insert="-">-</button>
+        <button class="tag-btn" data-lowercase="1">tout en minuscules</button>
+      </div>
+      <textarea id="transcription" placeholder="Écoute puis tape ici, en forme parlée…" spellcheck="false"></textarea>
+      <div class="lint-row" id="lint-row"></div>
+    </div>
+  </section>
+
+  <section class="step" id="speakers-section">
+    <div class="step-head"><span class="letter">5</span><h2>Locuteurs</h2></div>
+    <div class="panel">
+      <div class="speaker-count-row" id="speaker-count-row">
+        <button class="count-btn" data-count="0">0</button>
+        <button class="count-btn" data-count="1">1</button>
+        <button class="count-btn" data-count="2">2</button>
+        <button class="count-btn" data-count="3">3</button>
+        <button class="count-btn active" data-count="4">4+</button>
+      </div>
+      <div class="speaker-cards" id="speaker-cards"></div>
+    </div>
+  </section>
+
+  <section class="step">
+    <div class="step-head"><span class="letter">·</span><h2>Aide-mémoire</h2></div>
+
+    <details class="ref">
+      <summary>Marqueurs autorisés</summary>
+      <div class="ref-body">
+        <table class="ref-table">
+          <tr><th>Marqueur</th><th>Usage</th></tr>
+          <tr><td><code>[fp]</code></td><td>Hésitation absente du tableau des 9 formes fixes</td></tr>
+          <tr><td><code>(())</code></td><td>Passage incompréhensible ; mets ta meilleure hypothèse dedans si possible, ex. <code>((marseille))</code></td></tr>
+          <tr><td><code>{{}}</code></td><td>Mot mal prononcé, ambigu, normalisé à l'une des possibilités</td></tr>
+          <tr><td><code>-</code></td><td>Mot physiquement interrompu, exactement où il s'arrête (jamais sur un mot complet)</td></tr>
+          <tr><td><code>.</code></td><td>Après chaque lettre épelée individuellement, puis un espace — seul cas où le point est autorisé</td></tr>
+          <tr><td><code>'</code></td><td>Apostrophe droite uniquement : élisions standards, possessifs en -s/-x, noms propres</td></tr>
+        </table>
+      </div>
+    </details>
+
+    <details class="ref">
+      <summary>Les 9 hésitations à forme fixe</summary>
+      <div class="ref-body">
+        <table class="ref-table">
+          <tr><th>Forme</th><th>Sens</th></tr>
+          <tr><td><code>mhm</code></td><td>accord, bouche fermée</td></tr>
+          <tr><td><code>uh-huh</code></td><td>accord, intonation montante</td></tr>
+          <tr><td><code>hmm</code></td><td>réflexion</td></tr>
+          <tr><td><code>euh</code></td><td>courte hésitation</td></tr>
+          <tr><td><code>euhm</code></td><td>hésitation nasale</td></tr>
+          <tr><td><code>mm-mm</code></td><td>désaccord, intonation descendante</td></tr>
+          <tr><td><code>nan-nan</code></td><td>désaccord, bouche ouverte</td></tr>
+          <tr><td><code>oh</code></td><td>surprise</td></tr>
+          <tr><td><code>ouh</code></td><td>enthousiasme</td></tr>
+        </table>
+        <p>Toute autre hésitation → <code>[fp]</code>. Deux hésitations consécutives → un seul <code>[fp]</code>.</p>
+      </div>
+    </details>
+
+    <details class="ref">
+      <summary>Contraction vs correction grammaticale — la distinction piège</summary>
+      <div class="ref-body">
+        <p><b>Contraction non standard → à remettre en forme complète</b> (ce n'est pas de la correction) : <code>p'tit</code> → <code>petit</code> ; <code>chais pas</code> → <code>je sais pas</code>.</p>
+        <p><b>Grammaire déjà correcte à l'oral → ne jamais « corriger »</b> : <code>je sais pas</code> reste <code>je sais pas</code>, jamais <code>je ne sais pas</code>.</p>
+        <p>Élisions standards autorisées : <code>ce · de · le · la · ne · je · me · te · que · se · jusque · lorsque · puisque · quoique</code> — devant voyelle ou h.</p>
+      </div>
+    </details>
+
+    <details class="ref">
+      <summary>Nombres, lettres, acronymes</summary>
+      <div class="ref-body">
+        <p>Tous les nombres en toutes lettres (chiffres, ordinaux, quantités, heures, distances, calculs) : <code>quatre-vingt-sept</code>, <code>cinquième</code>, <code>trois zéro six</code>, <code>cinq plus cinq</code>.</p>
+        <p>Acronyme prononcé comme un mot → tel quel. Épelé lettre par lettre → point après chaque lettre : <code>d. u. b. o. i. s.</code> (jamais après un mot d'une seule lettre comme « y »). Mélange lettres+chiffres : <code>a. b. c. un deux trois</code>.</p>
+      </div>
+    </details>
+
+    <details class="ref">
+      <summary>Noms propres, marques, langue non cible</summary>
+      <div class="ref-body">
+        <p>Transcrire selon la prononciation, pas le logo officiel : <code>B2OBA</code> → <code>booba</code> ; <code>Taxi 5</code> → <code>taxi cinq</code> ; <code>RTL2</code> → <code>r. t. l. deux</code>.</p>
+        <p>Quelques mots étrangers dans un audio français → rester sur Aucune, cocher Langue non cible, transcrire ce qui est identifiable, <code>(())</code> sinon. Audio majoritairement étranger → catégorie « Principalement une langue non cible », pas de transcription.</p>
+      </div>
+    </details>
+  </section>
+
+  <section class="step">
+    <div class="step-head"><span class="letter">✓</span><h2>Vérification finale</h2></div>
+    <div class="panel">
+      <div class="checklist" id="checklist">
+        <label class="item"><input type="checkbox"><span>Tout en minuscules, aucune ponctuation de phrase, nombres en toutes lettres</span></label>
+        <label class="item"><input type="checkbox"><span>Chaque « euh », « euhm », « oh » et chaque répétition est présent, dans l'ordre prononcé</span></label>
+        <label class="item"><input type="checkbox"><span>Aucune grammaire « corrigée » : le texte dit ce que le locuteur a dit</span></label>
+        <label class="item"><input type="checkbox"><span>Chaque <code>(())</code> est au bon endroit et contient la meilleure hypothèse possible</span></label>
+        <label class="item"><input type="checkbox"><span>Aucun tag en dehors de <code>[fp]</code> <code>(())</code> <code>{{}}</code> <code>-</code> <code>.</code> <code>'</code></span></label>
+        <label class="item"><input type="checkbox"><span>Les caractéristiques cochées correspondent exactement à ce qui est entendu — ni plus, ni moins</span></label>
+        <label class="item"><input type="checkbox"><span>Nombre de locuteurs, sexe et origine renseignés pour chacun</span></label>
+      </div>
+    </div>
+  </section>
+
+  <footer class="note">Chaque écart entre l'audio et le texte apprend quelque chose de faux au modèle. Transcris ce que tu entends, pas ce que tu attends.</footer>
+</div>
+
+<script>
+  // ---- Audio ----
+  const fileInput = document.getElementById('audio-file');
+  const player = document.getElementById('player');
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (file) player.src = URL.createObjectURL(file);
+  });
+  document.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      player.playbackRate = parseFloat(btn.dataset.speed);
+    });
+  });
+
+  // ---- Question 1 / 2 gating ----
+  const q2Section = document.getElementById('q2-section');
+  const transcriptionSection = document.getElementById('transcription-section');
+  const speakersSection = document.getElementById('speakers-section');
+  function updateGating() {
+    const q1 = document.querySelector('input[name="q1"]:checked').value;
+    const isAucune = q1 === 'aucune';
+    [q2Section, transcriptionSection, speakersSection].forEach(sec => {
+      sec.querySelector('.panel').classList.toggle('disabled', !isAucune);
+    });
+  }
+  document.querySelectorAll('input[name="q1"]').forEach(r => r.addEventListener('change', updateGating));
+  updateGating();
+
+  // ---- Transcription toolbar ----
+  const textarea = document.getElementById('transcription');
+  document.querySelectorAll('.tag-btn[data-insert]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const insert = btn.dataset.insert;
+      const start = textarea.selectionStart, end = textarea.selectionEnd;
+      const before = textarea.value.slice(0, start), after = textarea.value.slice(end);
+      textarea.value = before + insert + after;
+      const caret = insert === '(())' || insert === '{{}}' ? start + 2 : start + insert.length;
+      textarea.focus();
+      textarea.setSelectionRange(caret, caret);
+      runLint();
+    });
+  });
+  document.querySelector('[data-lowercase]').addEventListener('click', () => {
+    textarea.value = textarea.value.toLowerCase();
+    runLint();
+  });
+
+  // ---- Live lint ----
+  const lintRow = document.getElementById('lint-row');
+  function runLint() {
+    const text = textarea.value;
+    const upper = (text.match(/[A-ZÀÂÄÇÉÈÊËÎÏÔÖÙÛÜŸ]/g) || []).length;
+    const digits = (text.match(/[0-9]/g) || []).length;
+    const forbiddenPunct = (text.match(/[,!?]/g) || []).length;
+    const curlyApos = (text.match(/[’‘]/g) || []).length;
+    const fp = (text.match(/\[fp\]/g) || []).length;
+    const unintelligible = (text.match(/\(\(/g) || []).length;
+    const mispron = (text.match(/\{\{/g) || []).length;
+
+    const checks = [
+      { label: 'majuscules', count: upper },
+      { label: 'chiffres', count: digits },
+      { label: 'ponctuation , ! ?', count: forbiddenPunct },
+      { label: 'apostrophes courbes', count: curlyApos },
+    ];
+    const tallies = [
+      { label: '[fp]', count: fp },
+      { label: '(())', count: unintelligible },
+      { label: '{{}}', count: mispron },
+    ];
+
+    lintRow.innerHTML = checks.map(c =>
+      `<span class="lint ${c.count > 0 ? 'bad' : 'ok'}">${c.count > 0 ? '✕' : '✓'} ${c.label}${c.count > 0 ? ' × ' + c.count : ''}</span>`
+    ).join('') + tallies.map(t => `<span class="lint">${t.label} × ${t.count}</span>`).join('');
+  }
+  textarea.addEventListener('input', runLint);
+  runLint();
+
+  // ---- Speakers ----
+  const speakerCards = document.getElementById('speaker-cards');
+  const countButtons = document.querySelectorAll('.count-btn');
+  function renderSpeakers(count) {
+    speakerCards.innerHTML = '';
+    if (count === 0) return;
+    const n = count === 4 ? 4 : count;
+    for (let i = 1; i <= n; i++) {
+      const card = document.createElement('div');
+      card.className = 'speaker-card';
+      card.innerHTML = `
+        <span class="name">Locuteur ${i}</span>
+        <select>
+          <option value="">Sexe…</option>
+          <option value="masculine">Voix masculine</option>
+          <option value="feminine">Voix féminine</option>
+          <option value="inconnu">Inconnu</option>
+        </select>
+        <select>
+          <option value="">Origine…</option>
+          <option value="natif">Natif</option>
+          <option value="non-natif">Non natif</option>
+          <option value="inconnu">Inconnu</option>
+        </select>`;
+      speakerCards.appendChild(card);
+    }
+  }
+  countButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      countButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderSpeakers(parseInt(btn.dataset.count, 10));
+    });
+  });
+  renderSpeakers(4);
+
+  // ---- Checklist ----
+  document.querySelectorAll('#checklist input[type="checkbox"]').forEach(box => {
+    box.addEventListener('change', () => box.closest('.item').classList.toggle('checked', box.checked));
+  });
+</script>
+</body>
+</html>

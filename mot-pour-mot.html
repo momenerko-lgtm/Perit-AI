@@ -1,0 +1,361 @@
+<title>Mot Pour Mot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #edeee7;
+    --paper-raised: #f6f6f1;
+    --ink: #1f2a24;
+    --ink-soft: #445048;
+    --muted: #6d766f;
+    --rule: #cfd2c6;
+    --accent: #28417a;
+    --accent-soft: #dde3f0;
+    --accent-strong: #1c2f59;
+    --stamp: #8c2a2a;
+    --focus: #28417a;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #14171a;
+      --paper-raised: #1b1f22;
+      --ink: #e9e7de;
+      --ink-soft: #c2c6bd;
+      --muted: #8a9089;
+      --rule: #33383a;
+      --accent: #8ea2d6;
+      --accent-soft: #212a3d;
+      --accent-strong: #b3c1e6;
+      --stamp: #d97a7a;
+      --focus: #8ea2d6;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #14171a;
+    --paper-raised: #1b1f22;
+    --ink: #e9e7de;
+    --ink-soft: #c2c6bd;
+    --muted: #8a9089;
+    --rule: #33383a;
+    --accent: #8ea2d6;
+    --accent-soft: #212a3d;
+    --accent-strong: #b3c1e6;
+    --stamp: #d97a7a;
+    --focus: #8ea2d6;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: clamp(20px, 5vw, 64px) 20px;
+  }
+
+  .sheet {
+    width: 100%;
+    max-width: 920px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  header.letterhead {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 18px;
+  }
+
+  .letterhead h1 {
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(2.1rem, 4vw, 2.85rem);
+    letter-spacing: -0.01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .letterhead p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 0.95rem;
+    max-width: 46ch;
+  }
+
+  .clause {
+    text-align: right;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    line-height: 1.6;
+    white-space: nowrap;
+  }
+
+  .panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 680px) {
+    .panels { grid-template-columns: 1fr; }
+    .letterhead { flex-direction: column; align-items: flex-start; }
+    .clause { text-align: left; }
+  }
+
+  .panel {
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    min-height: 360px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .panel-head .label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .panel-head .count {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  textarea, .mirror {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.95rem;
+    line-height: 1.65;
+    padding: 16px;
+    resize: none;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+  }
+
+  textarea:focus {
+    outline: 2px solid var(--focus);
+    outline-offset: -2px;
+  }
+
+  textarea::placeholder { color: var(--muted); }
+
+  .mirror {
+    overflow-y: auto;
+    color: var(--ink);
+  }
+
+  .mirror:empty::before {
+    content: attr(data-empty);
+    color: var(--muted);
+  }
+
+  .stamp {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px 5px 8px;
+    border: 1.5px solid var(--stamp);
+    border-radius: 3px;
+    color: var(--stamp);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    transform: rotate(-3deg);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+    background: color-mix(in srgb, var(--stamp) 6%, transparent);
+  }
+
+  .stamp.visible { opacity: 1; }
+
+  .stamp svg { width: 12px; height: 12px; flex: none; }
+
+  footer.actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--rule);
+    padding-top: 18px;
+  }
+
+  .integrity {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .integrity strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .btns {
+    display: flex;
+    gap: 10px;
+  }
+
+  button {
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    padding: 10px 18px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  button:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    border: 1px solid var(--accent);
+    color: var(--paper-raised);
+  }
+
+  .btn-primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--ink-soft);
+  }
+
+  .btn-ghost:hover { border-color: var(--ink-soft); color: var(--ink); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stamp, button { transition: none; }
+  }
+</style>
+
+<div class="sheet">
+  <header class="letterhead">
+    <div>
+      <h1>Mot Pour Mot</h1>
+      <p>Ta transcription reste exactement telle que tu l'as écrite. Aucune correction, aucune reformulation, aucune coupe.</p>
+    </div>
+    <div class="clause">Zéro correction<br>appliquée</div>
+  </header>
+
+  <div class="panels">
+    <div class="panel">
+      <div class="panel-head">
+        <span class="label">Texte original</span>
+        <span class="count" id="count-in">0 mot · 0 caractère</span>
+      </div>
+      <textarea id="input" placeholder="Colle ou tape ta transcription brute ici…" spellcheck="false" autocomplete="off"></textarea>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <span class="label">Copie conforme</span>
+        <span class="count" id="count-out">0 mot · 0 caractère</span>
+      </div>
+      <div class="stamp" id="stamp">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>
+        Conforme
+      </div>
+      <div class="mirror" id="output" data-empty="Le texte apparaîtra ici, à l'identique…"></div>
+    </div>
+  </div>
+
+  <footer class="actions">
+    <span class="integrity" id="integrity">En attente de texte.</span>
+    <div class="btns">
+      <button class="btn-ghost" id="clear">Effacer</button>
+      <button class="btn-primary" id="copy">Copier la copie conforme</button>
+    </div>
+  </footer>
+</div>
+
+<script>
+  const input = document.getElementById('input');
+  const output = document.getElementById('output');
+  const stamp = document.getElementById('stamp');
+  const countIn = document.getElementById('count-in');
+  const countOut = document.getElementById('count-out');
+  const integrity = document.getElementById('integrity');
+  const copyBtn = document.getElementById('copy');
+  const clearBtn = document.getElementById('clear');
+
+  function counts(text) {
+    const chars = text.length;
+    const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+    return `${words} mot${words === 1 ? '' : 's'} · ${chars} caractère${chars === 1 ? '' : 's'}`;
+  }
+
+  function render() {
+    const text = input.value;
+    output.textContent = text;
+    countIn.textContent = counts(text);
+    countOut.textContent = counts(text);
+    stamp.classList.toggle('visible', text.length > 0);
+    integrity.innerHTML = text.length > 0
+      ? '<strong>0 caractère modifié</strong> — copie identique à la source.'
+      : 'En attente de texte.';
+  }
+
+  input.addEventListener('input', render);
+
+  clearBtn.addEventListener('click', () => {
+    input.value = '';
+    render();
+    input.focus();
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(output.textContent);
+      const original = copyBtn.textContent;
+      copyBtn.textContent = 'Copié !';
+      setTimeout(() => { copyBtn.textContent = original; }, 1400);
+    } catch (e) {
+      output.focus();
+    }
+  });
+
+  render();
+</script>

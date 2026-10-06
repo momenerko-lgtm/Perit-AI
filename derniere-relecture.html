@@ -1,0 +1,426 @@
+<title>Dernière Relecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #edeee7;
+    --paper-raised: #f6f6f1;
+    --ink: #1f2a24;
+    --ink-soft: #445048;
+    --muted: #6d766f;
+    --rule: #cfd2c6;
+    --accent: #28417a;
+    --accent-soft: #dde3f0;
+    --accent-strong: #1c2f59;
+    --stamp: #8c2a2a;
+    --ok: #2f6b4f;
+    --ok-soft: #dcece2;
+    --focus: #28417a;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #14171a;
+      --paper-raised: #1b1f22;
+      --ink: #e9e7de;
+      --ink-soft: #c2c6bd;
+      --muted: #8a9089;
+      --rule: #33383a;
+      --accent: #8ea2d6;
+      --accent-soft: #212a3d;
+      --accent-strong: #b3c1e6;
+      --stamp: #d97a7a;
+      --ok: #7fbf9c;
+      --ok-soft: #1c2f27;
+      --focus: #8ea2d6;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #14171a;
+    --paper-raised: #1b1f22;
+    --ink: #e9e7de;
+    --ink-soft: #c2c6bd;
+    --muted: #8a9089;
+    --rule: #33383a;
+    --accent: #8ea2d6;
+    --accent-soft: #212a3d;
+    --accent-strong: #b3c1e6;
+    --stamp: #d97a7a;
+    --ok: #7fbf9c;
+    --ok-soft: #1c2f27;
+    --focus: #8ea2d6;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: clamp(20px, 5vw, 64px) 20px 80px;
+  }
+
+  .sheet {
+    width: 100%;
+    max-width: 760px;
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+  }
+
+  header.letterhead {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 18px;
+  }
+
+  .letterhead h1 {
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(2rem, 4vw, 2.7rem);
+    letter-spacing: -0.01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .letterhead p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 0.95rem;
+    max-width: 52ch;
+  }
+
+  .progress-bar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--paper);
+    padding: 14px 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .progress-track {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--rule);
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    transition: width 0.2s ease;
+  }
+
+  .progress-label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .reset-btn {
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 6px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .reset-btn:hover { border-color: var(--ink-soft); color: var(--ink); }
+  .reset-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  section.group {
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .group-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .group-head .letter {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 2px;
+    padding: 1px 6px;
+    margin-right: 8px;
+  }
+
+  .group-head h2 {
+    display: inline;
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .group-head .tally {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  ul.items {
+    list-style: none;
+    margin: 0;
+    padding: 4px 6px;
+  }
+
+  .item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 10px;
+    border-radius: 3px;
+  }
+
+  .item:hover { background: var(--accent-soft); }
+
+  .item input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    flex: none;
+    margin-top: 2px;
+    border: 1.5px solid var(--ink-soft);
+    border-radius: 3px;
+    background: var(--paper);
+    cursor: pointer;
+    position: relative;
+  }
+
+  .item input[type="checkbox"]:checked {
+    background: var(--ok);
+    border-color: var(--ok);
+  }
+
+  .item input[type="checkbox"]:checked::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 1px;
+    width: 5px;
+    height: 9px;
+    border: solid var(--paper-raised);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+
+  .item input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .item label {
+    font-size: 0.92rem;
+    line-height: 1.5;
+    cursor: pointer;
+  }
+
+  .item.checked label {
+    color: var(--muted);
+    text-decoration: line-through;
+    text-decoration-color: var(--rule);
+  }
+
+  .item code {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.85em;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    padding: 0 4px;
+    border-radius: 2px;
+  }
+
+  .banner {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: var(--ok-soft);
+    border: 1px solid var(--ok);
+    color: var(--ok);
+    border-radius: 3px;
+    padding: 12px 16px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.82rem;
+    letter-spacing: 0.02em;
+  }
+
+  .banner.visible { display: flex; }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-family: "IBM Plex Mono", monospace;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .progress-fill, .reset-btn { transition: none; }
+  }
+</style>
+
+<div class="sheet">
+  <header class="letterhead">
+    <h1>Dernière Relecture</h1>
+    <p>La vérification finale avant de soumettre une transcription — un contrôle, pas une opinion. Je dois représenter l'audio, pas réécrire ce que la personne aurait dû dire.</p>
+  </header>
+
+  <div class="progress-bar">
+    <span class="progress-label" id="progress-label">0 / 0 vérifiés</span>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    <button class="reset-btn" id="reset">Réinitialiser</button>
+  </div>
+
+  <div class="banner" id="banner">✓ Tout est vérifié — prêt à soumettre.</div>
+
+  <section class="group">
+    <div class="group-head"><span><span class="letter">A</span><h2>Avant d'écrire</h2></span><span class="tally"></span></div>
+    <ul class="items">
+      <li class="item"><input type="checkbox" id="a1"><label for="a1">J'ai écouté l'audio en entier avant de commencer à transcrire</label></li>
+      <li class="item"><input type="checkbox" id="a2"><label for="a2">J'ai choisi la catégorie générale (Question 1) avant toute transcription</label></li>
+      <li class="item"><input type="checkbox" id="a3"><label for="a3">Si catégorie ≠ Aucune : transcription vide, zéro locuteur, comme prévu</label></li>
+      <li class="item"><input type="checkbox" id="a4"><label for="a4">Les caractéristiques (Question 2) ne sont cochées que si Aucune est sélectionné</label></li>
+    </ul>
+  </section>
+
+  <section class="group">
+    <div class="group-head"><span><span class="letter">B</span><h2>Casse, ponctuation, symboles</h2></span><span class="tally"></span></div>
+    <ul class="items">
+      <li class="item"><input type="checkbox" id="b1"><label for="b1">Tout le texte est en minuscules, y compris les noms propres</label></li>
+      <li class="item"><input type="checkbox" id="b2"><label for="b2">Aucune ponctuation de phrase (virgule, point, point d'interrogation, point d'exclamation)</label></li>
+      <li class="item"><input type="checkbox" id="b3"><label for="b3">Les accents et la cédille sont conservés</label></li>
+      <li class="item"><input type="checkbox" id="b4"><label for="b4">Les symboles (<code>$</code> <code>€</code> <code>%</code> <code>&amp;</code>) sont écrits en toutes lettres</label></li>
+    </ul>
+  </section>
+
+  <section class="group">
+    <div class="group-head"><span><span class="letter">C</span><h2>Fidélité à l'audio</h2></span><span class="tally"></span></div>
+    <ul class="items">
+      <li class="item"><input type="checkbox" id="c1"><label for="c1">Aucune faute de grammaire n'a été corrigée</label></li>
+      <li class="item"><input type="checkbox" id="c2"><label for="c2">Les répétitions et hésitations réelles sont conservées</label></li>
+      <li class="item"><input type="checkbox" id="c3"><label for="c3">Aucune lettre répétée pour représenter un son prolongé</label></li>
+      <li class="item"><input type="checkbox" id="c4"><label for="c4">Aucun mot omis, halluciné ou substitué à ce qui a été dit</label></li>
+    </ul>
+  </section>
+
+  <section class="group">
+    <div class="group-head"><span><span class="letter">D</span><h2>Hésitations et sons vocaux</h2></span><span class="tally"></span></div>
+    <ul class="items">
+      <li class="item"><input type="checkbox" id="d1"><label for="d1">Les formes fixes sont utilisées telles quelles : <code>mhm</code> <code>uh-huh</code> <code>hmm</code> <code>euh</code> <code>euhm</code> <code>mm-mm</code> <code>nan-nan</code> <code>oh</code> <code>ouh</code></label></li>
+      <li class="item"><input type="checkbox" id="d2"><label for="d2">Toute autre hésitation est notée <code>[fp]</code></label></li>
+      <li class="item"><input type="checkbox" id="d3"><label for="d3"><code>[fp]</code> n'apparaît jamais deux fois de suite pour la même pause</label></li>
+    </ul>
+  </section>
+
+  <section class="group">
+    <div class="group-head"><span><span class="letter">E</span><h2>Marqueurs spéciaux</h2></span><span class="tally"></span></div>
+    <ul class="items">
+      <li class="item"><input type="checkbox" id="e1"><label for="e1"><code>(())</code> uniquement pour un passage réellement incompréhensible, placé au bon endroit</label></li>
+      <li class="item"><input type="checkbox" id="e2"><label for="e2">Une hypothèse a été tentée avant un <code>(())</code> vide, ex. <code>((siza))</code></label></li>
+      <li class="item"><input type="checkbox" id="e3"><label for="e3"><code>{{mot}}</code> utilisé seulement quand plusieurs mots plausibles existent</label></li>
+      <li class="item"><input type="checkbox" id="e4"><label for="e4"><code>-</code> utilisé seulement sur un mot réellement tronqué, pas un mot complet</label></li>
+      <li class="item"><input type="checkbox" id="e5"><label for="e5"><code>.</code> après chaque lettre épelée individuellement (sauf mot d'une lettre, ex. "y")</label></li>
+      <li class="item"><input type="checkbox" id="e6"><label for="e6">Seule l'apostrophe droite <code>'</code> est utilisée</label></li>
+    </ul>
+  </section>
+
+  <section class="group">
+    <div class="group-head"><span><span class="letter">F</span><h2>Nombres, acronymes, contractions</h2></span><span class="tally"></span></div>
+    <ul class="items">
+      <li class="item"><input type="checkbox" id="f1"><label for="f1">Tous les nombres sont écrits en toutes lettres</label></li>
+      <li class="item"><input type="checkbox" id="f2"><label for="f2">Les acronymes épelés portent un point après chaque lettre (ex. <code>d. u. b. o. i. s.</code>)</label></li>
+      <li class="item"><input type="checkbox" id="f3"><label for="f3">Les contractions populaires (<code>p'tit</code>, <code>chais pas</code>) sont remises en forme standard (<code>petit</code>, <code>je sais pas</code>)</label></li>
+      <li class="item"><input type="checkbox" id="f4"><label for="f4">Les élisions standards (<code>j'ai</code>, <code>l'homme</code>, <code>qu'il</code>) sont conservées telles quelles</label></li>
+    </ul>
+  </section>
+
+  <section class="group">
+    <div class="group-head"><span><span class="letter">G</span><h2>Noms propres, marques, lieux</h2></span><span class="tally"></span></div>
+    <ul class="items">
+      <li class="item"><input type="checkbox" id="g1"><label for="g1">L'orthographe officielle a été recherchée (Larousse, puis Le Robert, puis Termium Plus pour le Canada)</label></li>
+      <li class="item"><input type="checkbox" id="g2"><label for="g2">Les marques/titres sont adaptés aux règles du projet (minuscules, nombres en lettres)</label></li>
+    </ul>
+  </section>
+
+  <section class="group">
+    <div class="group-head"><span><span class="letter">H</span><h2>Locuteurs</h2></span><span class="tally"></span></div>
+    <ul class="items">
+      <li class="item"><input type="checkbox" id="h1"><label for="h1">Nombre de locuteurs renseigné (0, 1, 2, 3, 4+)</label></li>
+      <li class="item"><input type="checkbox" id="h2"><label for="h2">Sexe vocal renseigné par locuteur, ou Inconnu si ambigu — sans deviner</label></li>
+      <li class="item"><input type="checkbox" id="h3"><label for="h3">Origine renseignée par locuteur, ou Inconnu si indéterminable — sans deviner</label></li>
+    </ul>
+  </section>
+
+  <section class="group">
+    <div class="group-head"><span><span class="letter">I</span><h2>Dernière vérification</h2></span><span class="tally"></span></div>
+    <ul class="items">
+      <li class="item"><input type="checkbox" id="i1"><label for="i1">La zone Commentaires est vide, sauf instruction expresse</label></li>
+      <li class="item"><input type="checkbox" id="i2"><label for="i2">Aucun tag inventé en dehors de <code>[fp]</code> <code>(())</code> <code>{{}}</code> <code>-</code> <code>.</code> <code>'</code></label></li>
+      <li class="item"><input type="checkbox" id="i3"><label for="i3">Je transcris ce que j'entends, pas ce que je m'attends à entendre</label></li>
+    </ul>
+  </section>
+
+  <footer>Chaque écart entre l'audio et le texte apprend quelque chose de faux au modèle.</footer>
+</div>
+
+<script>
+  const checkboxes = Array.from(document.querySelectorAll('.item input[type="checkbox"]'));
+  const fill = document.getElementById('progress-fill');
+  const label = document.getElementById('progress-label');
+  const banner = document.getElementById('banner');
+  const resetBtn = document.getElementById('reset');
+
+  function update() {
+    const total = checkboxes.length;
+    const done = checkboxes.filter(c => c.checked).length;
+    fill.style.width = total ? `${(done / total) * 100}%` : '0%';
+    label.textContent = `${done} / ${total} vérifiés`;
+    banner.classList.toggle('visible', done === total);
+
+    document.querySelectorAll('.group').forEach(group => {
+      const boxes = Array.from(group.querySelectorAll('input[type="checkbox"]'));
+      const groupDone = boxes.filter(c => c.checked).length;
+      group.querySelector('.tally').textContent = `${groupDone}/${boxes.length}`;
+      boxes.forEach(box => {
+        box.closest('.item').classList.toggle('checked', box.checked);
+      });
+    });
+  }
+
+  checkboxes.forEach(c => c.addEventListener('change', update));
+
+  resetBtn.addEventListener('click', () => {
+    checkboxes.forEach(c => { c.checked = false; });
+    update();
+  });
+
+  update();
+</script>
