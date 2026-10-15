@@ -21,7 +21,9 @@
 // un compromis accepte ici puisque l'objectif n'est plus des donnees
 // d'entrainement fideles a l'audio, mais un texte lisible.
 
-export const CLEANUP_MODEL = 'llama-3.3-70b-versatile';
+// llama-3.3-70b-versatile a ete retire par Groq (deprecation du 16/08/2026) ;
+// openai/gpt-oss-120b est le remplacement recommande par Groq.
+export const CLEANUP_MODEL = 'openai/gpt-oss-120b';
 
 const SYSTEM_PROMPT = `Tu es un correcteur de transcription audio en français. On te donne la transcription brute d'un enregistrement. Réécris-la en respectant strictement ces règles :
 - Corrige la grammaire, la conjugaison et l'orthographe.
