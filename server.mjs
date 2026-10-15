@@ -68,7 +68,12 @@ const server = http.createServer(async (req, res) => {
         body: form,
       });
 
-      if (!groqRes.ok) return send(res, groqRes.status, { error: await groqRes.text() });
+      if (!groqRes.ok) {
+        const errorText = await groqRes.text();
+        const message = errorText || `Erreur Groq (${groqRes.status}) sans détail dans la réponse.`;
+        console.error('Groq a refusé la transcription :', groqRes.status, errorText);
+        return send(res, groqRes.status, { error: message });
+      }
       const data = await groqRes.json();
       return send(res, 200, { text: processGroqResponse(data) });
     }
@@ -76,7 +81,9 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(404, { 'Content-Type': 'text/plain' });
     res.end('Not found');
   } catch (err) {
-    send(res, 500, { error: String(err && err.message ? err.message : err) });
+    console.error('Erreur serveur sur /api/transcribe :', err);
+    const message = (err && err.message) || String(err) || 'Erreur serveur sans détail.';
+    send(res, 500, { error: message });
   }
 });
 
