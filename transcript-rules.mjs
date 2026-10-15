@@ -79,6 +79,21 @@ function isLowConfidence(segment) {
   return false;
 }
 
+// Generiques de sous-titrage que Whisper hallucine sur un passage de
+// silence/bruit (residu de ses donnees d'entrainement) - jamais de la
+// parole reelle. Contrairement a (()) qui suppose qu'il y avait quelque
+// chose a entendre, on les supprime entierement. Le score de confiance ne
+// suffit pas a les detecter : le modele peut etre "confiant" sur une
+// hallucination connue.
+const KNOWN_HALLUCINATIONS = [
+  /sous-titrage\s+(?:société\s+)?radio-canada/i,
+  /sous-titr(?:age|es?)\s+(?:réalisés?\s+)?par\s+la\s+communauté\s+d'amara\.org/i,
+];
+
+function isKnownHallucination(text) {
+  return KNOWN_HALLUCINATIONS.some((pattern) => pattern.test(text));
+}
+
 // Construit le texte a partir des segments verbose_json, en entourant de
 // (()) les segments jugs peu fiables - avec l'hypothese de Whisper a
 // l'interieur, jamais vide tant qu'il y a du texte.
@@ -86,7 +101,7 @@ export function annotateLowConfidenceSegments(segments) {
   return segments
     .map((seg) => {
       const trimmed = (seg.text || '').trim();
-      if (!trimmed) return '';
+      if (!trimmed || isKnownHallucination(trimmed)) return '';
       return isLowConfidence(seg) ? `((${trimmed}))` : trimmed;
     })
     .filter(Boolean)
@@ -98,9 +113,14 @@ export function annotateLowConfidenceSegments(segments) {
 // texte final, avec la casse et la ponctuation naturelles de Whisper
 // conservees intactes.
 export function processGroqResponse(data) {
-  const rawText = Array.isArray(data.segments) && data.segments.length > 0
+  let rawText = Array.isArray(data.segments) && data.segments.length > 0
     ? annotateLowConfidenceSegments(data.segments)
     : (data.text || '');
+  // Filet de securite si jamais verbose_json n'est pas dispo (fallback texte
+  // brut sans segments) : on retire quand meme les generiques hallucines.
+  for (const pattern of KNOWN_HALLUCINATIONS) {
+    rawText = rawText.replace(pattern, '').trim();
+  }
   return straightenApostrophes(canonicalizeHesitations(rawText));
 }
 
