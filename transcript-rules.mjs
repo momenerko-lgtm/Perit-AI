@@ -1,65 +1,107 @@
-// Nettoyage de la transcription brute renvoyee par Groq/Whisper : grammaire,
-// ponctuation et orthographe corrigees, tout en conservant exactement les
-// hesitations (euh, hmm, mhm...) et les repetitions de mots reels, qui
-// restent necessaires a l'utilisateur.
+// Post-traitement de la transcription brute renvoyee par Groq/Whisper.
 //
-// Historique : ce fichier contenait auparavant un pipeline verbatim (marqueurs
-// [fp]/(())/{{}}, hesitations canonisees, zero correction) implementant un
-// guideline client de transcription mot pour mot. Ce mode a ete remplace par
-// une demande explicite de l'utilisateur ; l'ancien code reste consultable
-// dans l'historique git (commit 1855f0b) si le besoin verbatim revient.
+// Historique : un premier pipeline verbatim (markers [fp]/(())/{{}}, minuscules,
+// ponctuation retiree) a ete remplace par un nettoyage via LLM (grammaire/
+// ponctuation/orthographe corrigees). Ce nettoyage LLM s'est revele peu fiable :
+// sur un exemple reel, il a supprime un "alors" repete, un "euh" et une
+// repetition de clause malgre des instructions explicites de les garder - un
+// LLM qui reecrit un texte a une tendance naturelle a "nettoyer" les
+// disfluences meme quand on lui demande explicitement de ne pas le faire.
 //
-// Pourquoi un second appel a un modele de langage et pas des regex : retirer
-// un mot d'hesitation proprement (sans virgule orpheline, sans double espace,
-// sans casser la structure de la phrase) exige de reconstruire une phrase
-// grammaticalement coherente - exactement le meme probleme que la correction
-// de grammaire elle-meme. Aucune regle de texte deterministe ne fait ca de
-// facon fiable ; un LLM le fait en une passe.
-//
-// Risque assume : contrairement au pipeline verbatim (deterministe), un LLM
-// peut lui-meme halluciner ou substituer un mot en reecrivant le texte. C'est
-// un compromis accepte ici puisque l'objectif n'est plus des donnees
-// d'entrainement fideles a l'audio, mais un texte lisible.
+// Approche actuelle : retour a un pipeline deterministe (code, pas IA) qui ne
+// peut PAS oublier un mot puisqu'il ne fait que des remplacements cibles sur
+// le texte existant, jamais de reecriture globale. Difference avec l'ancien
+// pipeline verbatim : on NE force plus les minuscules et on NE retire PLUS la
+// ponctuation - la casse et la ponctuation naturelles de Whisper sont
+// conservees telles quelles.
 
-// llama-3.3-70b-versatile a ete retire par Groq (deprecation du 16/08/2026) ;
-// openai/gpt-oss-120b est le remplacement recommande par Groq.
-export const CLEANUP_MODEL = 'openai/gpt-oss-120b';
+const FIXED_HESITATIONS = ['mhm', 'uh-huh', 'hmm', 'euh', 'euhm', 'mm-mm', 'nan-nan', 'oh', 'ouh'];
 
-const SYSTEM_PROMPT = `Tu es un correcteur de transcription audio en français. On te donne la transcription brute d'un enregistrement. Réécris-la en respectant strictement ces règles :
-- Corrige la grammaire, la conjugaison et l'orthographe.
-- Ajoute une ponctuation de phrase correcte (virgules, points, points d'interrogation/exclamation) et les majuscules appropriées (début de phrase, noms propres).
-- Conserve toutes les hésitations et signaux d'écoute oraux (euh, hmm, mhm, uh-huh, mm-mm, nan-nan, oh, ouh, euhm, etc.) exactement là où ils se produisent dans le texte source. Ne les supprime pas, ne les déplace pas, et n'en invente pas qui seraient absentes du texte source. Écris-les avec l'orthographe indiquée ici quand tu reconnais le son correspondant.
-- Supprime uniquement les faux départs incomplets (un mot tronqué remplacé par sa version complète juste après).
-- Ne supprime JAMAIS la répétition d'un mot réel (ex. « tu tu tu veux », « je je je crois », « on on on y va ») : transcris-la exactement telle qu'elle apparaît dans le texte source, avec le même nombre d'occurrences, même si la phrase semble redondante. N'invente pas non plus de répétition absente du texte source.
-- Ne change jamais le sens du propos : ne résume pas, ne reformule pas le fond, n'ajoute aucune information absente du texte source. Garde tous les mots porteurs de sens.
-- Réponds uniquement avec le texte corrigé, sans aucun commentaire ni introduction.`;
+// Echantillon de style passe au parametre "prompt" de l'API Whisper pour
+// inciter le modele a conserver les hesitations plutot que de lisser la
+// transcription (reduit le risque d'OMISSION d'un "euh"/"hmm" reellement
+// prononce, avant meme que notre code ne voie le texte).
+export const DISFLUENCY_PRIMING_PROMPT = "Euh, alors, je dirais que, hmm, c'est-à-dire, mhm, voilà, enfin bref.";
 
-// Reecrit rawText (sortie brute de Whisper) en texte propre via un modele de
-// langage heberge sur Groq (meme cle API que la transcription audio).
-export async function cleanupTranscript(rawText, apiKey) {
-  const trimmed = (rawText || '').trim();
-  if (!trimmed) return '';
+// Variantes courantes que Whisper sort en texte libre -> forme fixe du client.
+// Liste volontairement limitee a des sons non lexicaux sans ambiguite ; on
+// prefere sous-detecter que de reecrire un vrai mot par erreur.
+const HESITATION_VARIANTS = [
+  { canonical: 'euhm', pattern: /\b(euhm+|euhhm+|eum+)\b/gi },
+  { canonical: 'euh', pattern: /\b(euh+|eeuh+|euuh+|heu+)\b/gi },
+  { canonical: 'hmm', pattern: /\b(hum+|hm+)\b/gi },
+  { canonical: 'mhm', pattern: /\b(mhm+|mmh+)\b/gi },
+  { canonical: 'uh-huh', pattern: /\b(uh[\s-]?huh)\b/gi },
+  { canonical: 'mm-mm', pattern: /\b(mm[\s-]?mm)\b/gi },
+  { canonical: 'nan-nan', pattern: /\b(nan[\s-]?nan)\b/gi },
+  { canonical: 'oh', pattern: /\boh+\b/gi },
+  { canonical: 'ouh', pattern: /\bouh+\b/gi },
+];
 
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: CLEANUP_MODEL,
-      temperature: 0,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: trimmed },
-      ],
-    }),
-  });
+// Sons de type hesitation clairement non lexicaux mais absents des 9 formes
+// fixes -> [fp]. Liste conservatrice : "bah"/"ben"/"hein" sont de vrais mots
+// du discours francais, on ne les touche pas pour eviter les faux positifs.
+const UNKNOWN_HESITATION_TO_FP = /\b(pff+|tss+|hmpf+)\b/gi;
 
-  if (!response.ok) {
-    throw new Error(`Erreur du modèle de nettoyage (${response.status}) : ${await response.text()}`);
+export function canonicalizeHesitations(text) {
+  let result = text;
+  for (const { canonical, pattern } of HESITATION_VARIANTS) {
+    result = result.replace(pattern, canonical);
   }
-
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content?.trim() || trimmed;
+  result = result.replace(UNKNOWN_HESITATION_TO_FP, '[fp]');
+  // Si deux pauses pleines [fp] se suivent, on ne transcrit [fp] qu'une seule
+  // fois (contrairement aux repetitions de mots reels, qui doivent elles
+  // etre conservees).
+  result = result.replace(/\[fp\](?:\s+\[fp\])+/gi, '[fp]');
+  return result;
 }
+
+// Remplacement de caractere sans risque de perte de contenu : uniformise
+// l'apostrophe courbe en apostrophe droite. On NE touche plus a la casse, a
+// la ponctuation de phrase, ni aux chiffres/symboles - ceux-ci restent
+// exactement comme Whisper les a produits.
+export function straightenApostrophes(text) {
+  return text.replace(/’/g, "'");
+}
+
+// Seuils heuristiques (a ajuster selon l'experience terrain) : un segment
+// Whisper est considere "pas fiable" s'il est tres probablement du silence/
+// bruit mal transcrit (no_speech_prob eleve) ou si le modele lui-meme avait
+// peu confiance dans sa propre sortie (avg_logprob bas). Ces deux champs ne
+// sont fournis que par response_format: 'verbose_json'.
+const LOW_CONFIDENCE_NO_SPEECH_PROB = 0.5;
+const LOW_CONFIDENCE_AVG_LOGPROB = -0.9;
+
+function isLowConfidence(segment) {
+  const { no_speech_prob, avg_logprob } = segment;
+  if (typeof no_speech_prob === 'number' && no_speech_prob > LOW_CONFIDENCE_NO_SPEECH_PROB) return true;
+  if (typeof avg_logprob === 'number' && avg_logprob < LOW_CONFIDENCE_AVG_LOGPROB) return true;
+  return false;
+}
+
+// Construit le texte a partir des segments verbose_json, en entourant de
+// (()) les segments jugs peu fiables - avec l'hypothese de Whisper a
+// l'interieur, jamais vide tant qu'il y a du texte.
+export function annotateLowConfidenceSegments(segments) {
+  return segments
+    .map((seg) => {
+      const trimmed = (seg.text || '').trim();
+      if (!trimmed) return '';
+      return isLowConfidence(seg) ? `((${trimmed}))` : trimmed;
+    })
+    .filter(Boolean)
+    .join(' ');
+}
+
+// Point d'entree unique utilise par server.mjs et groq-transcribe.mjs :
+// prend la reponse JSON brute de l'API Groq (verbose_json) et renvoie le
+// texte final, avec la casse et la ponctuation naturelles de Whisper
+// conservees intactes.
+export function processGroqResponse(data) {
+  const rawText = Array.isArray(data.segments) && data.segments.length > 0
+    ? annotateLowConfidenceSegments(data.segments)
+    : (data.text || '');
+  return straightenApostrophes(canonicalizeHesitations(rawText));
+}
+
+export { FIXED_HESITATIONS };

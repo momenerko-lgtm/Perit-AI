@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { exec } from 'node:child_process';
-import { cleanupTranscript } from './transcript-rules.mjs';
+import { processGroqResponse, DISFLUENCY_PRIMING_PROMPT } from './transcript-rules.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 5173;
@@ -59,7 +59,8 @@ const server = http.createServer(async (req, res) => {
       form.append('file', new Blob([buffer]), filename);
       form.append('model', 'whisper-large-v3-turbo');
       form.append('language', 'fr');
-      form.append('response_format', 'json');
+      form.append('response_format', 'verbose_json');
+      form.append('prompt', DISFLUENCY_PRIMING_PROMPT);
 
       const groqRes = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
         method: 'POST',
@@ -69,8 +70,7 @@ const server = http.createServer(async (req, res) => {
 
       if (!groqRes.ok) return send(res, groqRes.status, { error: await groqRes.text() });
       const data = await groqRes.json();
-      const cleaned = await cleanupTranscript(data.text, GROQ_API_KEY);
-      return send(res, 200, { text: cleaned });
+      return send(res, 200, { text: processGroqResponse(data) });
     }
 
     res.writeHead(404, { 'Content-Type': 'text/plain' });

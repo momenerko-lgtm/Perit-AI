@@ -14,7 +14,7 @@ if (!filePath) {
 }
 
 const fs = await import('node:fs');
-const { cleanupTranscript } = await import('./transcript-rules.mjs');
+const { processGroqResponse, DISFLUENCY_PRIMING_PROMPT } = await import('./transcript-rules.mjs');
 
 if (!fs.existsSync(filePath)) {
   console.error(`Fichier introuvable : ${filePath}`);
@@ -28,8 +28,8 @@ const form = new FormData();
 form.append('file', new Blob([fileBuffer]), fileName);
 form.append('model', 'whisper-large-v3-turbo');
 form.append('language', 'fr');
-form.append('response_format', 'json');
-if (prompt) form.append('prompt', prompt);
+form.append('response_format', 'verbose_json');
+form.append('prompt', prompt || DISFLUENCY_PRIMING_PROMPT);
 
 const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
   method: 'POST',
@@ -43,4 +43,4 @@ if (!response.ok) {
 }
 
 const data = await response.json();
-console.log(await cleanupTranscript(data.text, apiKey));
+console.log(processGroqResponse(data));
