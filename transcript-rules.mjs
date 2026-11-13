@@ -127,6 +127,14 @@ export function numberToFrenchWords(num) {
 const ROMAN_VALUES = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000 };
 const ROMAN_STRICT = /^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/;
 
+// Combinaisons de 2 lettres grammaticalement valides en chiffres romains
+// mais qui sont, en pratique, des abreviations francaises/internationales
+// bien plus frequentes que leur usage numeral : CD (disque), CV
+// (curriculum vitae), IV (intraveineuse), XL (taille de vetement), MC
+// (animateur), DC (Washington DC...). On ne les convertit jamais, meme si
+// ROMAN_STRICT les validerait.
+const NON_NUMERAL_ABBREVIATIONS = new Set(['CD', 'CV', 'IV', 'XL', 'MC', 'DC']);
+
 function romanToInt(roman) {
   let total = 0;
   for (let i = 0; i < roman.length; i++) {
@@ -138,13 +146,43 @@ function romanToInt(roman) {
   return total;
 }
 
+// Forme ordinale francaise des siecles/chapitres : "XVIIe" (dix-septieme),
+// "XIXe", "XXe"... le suffixe "e"/"ème" colle directement au chiffre romain
+// (pas d'espace), donc la regle cardinale seule (avec \b final) ne le
+// capture jamais - il faut consommer ce suffixe explicitement.
+function cardinalToOrdinalWord(value, cardinalWord) {
+  if (value === 1) return 'première';
+  if (/cinq$/.test(cardinalWord)) return cardinalWord.replace(/cinq$/, 'cinquième');
+  if (/neuf$/.test(cardinalWord)) return cardinalWord.replace(/neuf$/, 'neuvième');
+  if (cardinalWord.endsWith('e')) return cardinalWord.slice(0, -1) + 'ième';
+  return cardinalWord + 'ième';
+}
+
 function convertRomanNumerals(text) {
-  return text.replace(/\b[IVXLCDM]{2,}\b/g, (token) => {
+  // Avec suffixe ordinal (Ve, Xe, XVIIe, XIXème...). Pour une seule lettre,
+  // on se limite strictement a V et X (Ve, Xe) : L+e="Le", D+e="De",
+  // C+e="Ce", M+e="Me", I+e="Ie" sont des mots francais tres courants
+  // (surtout en debut de phrase, ou le L/D/C/M est majuscule) - les
+  // convertir casserait le texte. "I" + suffixe reste gere uniquement par
+  // convertOrdinalFirst (forme "Ier"/"Ière").
+  let result = text.replace(/\b([IVXLCDM]+)(e|ème)\b/g, (fullMatch, token, suffix) => {
+    if (token.length === 1 && token !== 'V' && token !== 'X') return fullMatch;
+    if (NON_NUMERAL_ABBREVIATIONS.has(token)) return fullMatch;
+    if (!ROMAN_STRICT.test(token)) return fullMatch;
+    const value = romanToInt(token);
+    if (!value || value === 1) return fullMatch;
+    return cardinalToOrdinalWord(value, numberToFrenchWords(value));
+  });
+  // Sans suffixe : on exige au moins 2 lettres pour eviter de confondre une
+  // initiale isolee (V, X...) avec un chiffre romain.
+  result = result.replace(/\b[IVXLCDM]{2,}\b/g, (token) => {
+    if (NON_NUMERAL_ABBREVIATIONS.has(token)) return token;
     if (!ROMAN_STRICT.test(token)) return token;
     const value = romanToInt(token);
     if (!value) return token;
     return value === 1 ? 'premier' : numberToFrenchWords(value);
   });
+  return result;
 }
 
 // Forme francaise "Ier"/"Ire"/"Ière" (ex. "François Ier", "Elizabeth Ière")
