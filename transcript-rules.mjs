@@ -57,11 +57,114 @@ export function canonicalizeHesitations(text) {
 }
 
 // Remplacement de caractere sans risque de perte de contenu : uniformise
-// l'apostrophe courbe en apostrophe droite. On NE touche plus a la casse, a
-// la ponctuation de phrase, ni aux chiffres/symboles - ceux-ci restent
-// exactement comme Whisper les a produits.
+// l'apostrophe courbe en apostrophe droite. On NE touche pas a la casse ni a
+// la ponctuation de phrase - celles-ci restent telles que Whisper les a
+// produites. Les chiffres, chiffres romains et % sont en revanche ecrits en
+// lettres (voir spellOutNumbersAndSymbols plus bas), a la demande explicite
+// de l'utilisateur.
 export function straightenApostrophes(text) {
   return text.replace(/’/g, "'");
+}
+
+export function numberToFrenchWords(num) {
+  num = parseInt(num, 10);
+  if (isNaN(num)) return String(num);
+  if (num === 0) return 'zéro';
+  const units = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf'];
+  const teens = ['dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
+  const tensWords = { 2: 'vingt', 3: 'trente', 4: 'quarante', 5: 'cinquante', 6: 'soixante' };
+
+  function twoDigits(n) {
+    if (n === 0) return '';
+    if (n < 10) return units[n];
+    if (n < 20) return teens[n - 10];
+    if (n < 70) {
+      const ten = Math.floor(n / 10), unit = n % 10;
+      const base = tensWords[ten];
+      if (unit === 0) return base;
+      if (unit === 1) return base + '-et-un';
+      return base + '-' + units[unit];
+    }
+    if (n < 80) {
+      const rem = n - 60;
+      if (rem === 11) return 'soixante-et-onze';
+      return 'soixante-' + (rem < 10 ? units[rem] : teens[rem - 10]);
+    }
+    if (n < 90) {
+      const rem = n - 80;
+      if (rem === 0) return 'quatre-vingts';
+      return 'quatre-vingt-' + units[rem];
+    }
+    const rem = n - 80;
+    return 'quatre-vingt-' + teens[rem - 10];
+  }
+
+  function underThousand(n) {
+    if (n < 100) return twoDigits(n);
+    const h = Math.floor(n / 100), r = n % 100;
+    if (r === 0) return h === 1 ? 'cent' : units[h] + '-cents';
+    return (h === 1 ? 'cent' : units[h] + '-cent') + '-' + twoDigits(r);
+  }
+
+  let n = num, parts = [];
+  const billions = Math.floor(n / 1e9); n %= 1e9;
+  const millions = Math.floor(n / 1e6); n %= 1e6;
+  const thousands = Math.floor(n / 1e3); n %= 1e3;
+  const rest = n;
+  if (billions) parts.push((billions === 1 ? 'un' : underThousand(billions)) + '-milliard' + (billions > 1 ? 's' : ''));
+  if (millions) parts.push((millions === 1 ? 'un' : underThousand(millions)) + '-million' + (millions > 1 ? 's' : ''));
+  if (thousands) parts.push(thousands === 1 ? 'mille' : underThousand(thousands) + '-mille');
+  if (rest) parts.push(underThousand(rest));
+  return parts.join('-').replace(/-/g, ' ');
+}
+
+// Chiffres romains (II, III, IV, XIV, XVI...) -> mots francais. Convention
+// standard pour les noms de monarques/papes/chapitres : "I" -> "premier",
+// tout le reste en nombre cardinal ("Louis XIV" -> "louis quatorze"). Limite
+// assumee : pas de distinction premier/premiere selon le genre, et les
+// jetons d'une seule lettre (I, V, X...) ne sont pas convertis pour eviter
+// de confondre une initiale isolee avec un chiffre romain.
+const ROMAN_VALUES = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000 };
+const ROMAN_STRICT = /^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/;
+
+function romanToInt(roman) {
+  let total = 0;
+  for (let i = 0; i < roman.length; i++) {
+    const current = ROMAN_VALUES[roman[i]];
+    const next = ROMAN_VALUES[roman[i + 1]];
+    if (next > current) total -= current;
+    else total += current;
+  }
+  return total;
+}
+
+function convertRomanNumerals(text) {
+  return text.replace(/\b[IVXLCDM]{2,}\b/g, (token) => {
+    if (!ROMAN_STRICT.test(token)) return token;
+    const value = romanToInt(token);
+    if (!value) return token;
+    return value === 1 ? 'premier' : numberToFrenchWords(value);
+  });
+}
+
+// Forme francaise "Ier"/"Ire"/"Ière" (ex. "François Ier", "Elizabeth Ière")
+// -> "premier"/"première". Cas explicite car le "I" seul n'est jamais
+// converti par convertRomanNumerals (trop ambigu sans ce suffixe).
+function convertOrdinalFirst(text) {
+  return text
+    .replace(/\bI(?:ère|re)\b/g, 'première')
+    .replace(/\bIer\b/g, 'premier');
+}
+
+// Ecrit en lettres les chiffres arabes, les chiffres romains et le symbole
+// % - a la demande explicite de l'utilisateur. N'touche a aucun autre
+// symbole (€, $, &...) qui n'a pas ete demande.
+export function spellOutNumbersAndSymbols(text) {
+  let result = text.replace(/\d+/g, (m) => numberToFrenchWords(m));
+  result = convertOrdinalFirst(result);
+  result = convertRomanNumerals(result);
+  result = result.replace(/%/g, ' pour cent ');
+  return result.replace(/[ \t]+/g, ' ').trim();
 }
 
 // Seuils heuristiques (a ajuster selon l'experience terrain) : un segment
@@ -121,7 +224,7 @@ export function processGroqResponse(data) {
   for (const pattern of KNOWN_HALLUCINATIONS) {
     rawText = rawText.replace(pattern, '').trim();
   }
-  return straightenApostrophes(canonicalizeHesitations(rawText));
+  return spellOutNumbersAndSymbols(straightenApostrophes(canonicalizeHesitations(rawText)));
 }
 
 export { FIXED_HESITATIONS };
