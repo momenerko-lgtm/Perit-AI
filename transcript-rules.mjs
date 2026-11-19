@@ -194,6 +194,14 @@ function convertOrdinalFirst(text) {
     .replace(/\bIer\b/g, 'premier');
 }
 
+// "arobase"/"arobas" n'a quasiment aucun autre sens en francais que le
+// symbole @ - contrairement a "virgule"/"point", mots francais tres
+// courants par ailleurs, qu'on ne convertit donc jamais automatiquement
+// (trop de risque de casser une phrase normale, ex. "a ce point").
+function convertArobase(text) {
+  return text.replace(/\b(?:arobase|arobas|arrobase|arrobas)\b/gi, '@');
+}
+
 // Ecrit en lettres les chiffres arabes, les chiffres romains et le symbole
 // % - a la demande explicite de l'utilisateur. N'touche a aucun autre
 // symbole (€, $, &...) qui n'a pas ete demande.
@@ -202,7 +210,9 @@ export function spellOutNumbersAndSymbols(text) {
   result = convertOrdinalFirst(result);
   result = convertRomanNumerals(result);
   result = result.replace(/%/g, ' pour cent ');
-  return result.replace(/[ \t]+/g, ' ').trim();
+  result = convertArobase(result);
+  result = result.replace(/[ \t]+/g, ' ').trim();
+  return result.replace(/ +([,.;:!?])/g, '$1');
 }
 
 // Seuils heuristiques (a ajuster selon l'experience terrain) : un segment

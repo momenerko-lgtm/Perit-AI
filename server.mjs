@@ -57,7 +57,7 @@ const server = http.createServer(async (req, res) => {
 
       const form = new FormData();
       form.append('file', new Blob([buffer]), filename);
-      form.append('model', 'whisper-large-v3-turbo');
+      form.append('model', 'whisper-large-v3');
       form.append('language', 'fr');
       form.append('response_format', 'verbose_json');
       form.append('prompt', DISFLUENCY_PRIMING_PROMPT);
