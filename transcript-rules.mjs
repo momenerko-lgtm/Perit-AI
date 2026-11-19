@@ -274,8 +274,11 @@ const KNOWN_HALLUCINATIONS = [
   /sous-titr(?:age|es?)\s+(?:réalisés?\s+)?par\s+la\s+communauté\s+d'amara\.org/i,
   // Variante "Sous-titrage ST' 501" (code numerique variable) - detectee
   // ICI, avant la conversion des chiffres en lettres, sinon elle devient
-  // mefiante a reperer ("cinq cent un" au lieu de "501").
-  /sous-titrage\s+st'?\s*\d*/i,
+  // mefiante a reperer ("cinq cent un" au lieu de "501"). L'apostrophe
+  // apres ST est OBLIGATOIRE dans ce motif : sans elle, "sous-titrage
+  // standard" ou "sous-titrage strict" (mots francais normaux) se
+  // faisaient amputer en "andard"/"rict" - bug reel decouvert en prod.
+  /sous-titrage\s+st'\s*\d*/i,
 ];
 
 function isKnownHallucination(text) {
