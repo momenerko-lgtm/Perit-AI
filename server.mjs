@@ -51,6 +51,13 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (req.method === 'GET' && req.url === '/transcript-rules.mjs') {
+      const js = fs.readFileSync(path.join(__dirname, 'transcript-rules.mjs'));
+      res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8' });
+      res.end(js);
+      return;
+    }
+
     if (req.method === 'POST' && req.url === '/api/transcribe') {
       const filename = decodeURIComponent(req.headers['x-filename'] || 'audio.webm');
       const buffer = await readBody(req);
