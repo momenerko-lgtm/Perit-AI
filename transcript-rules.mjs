@@ -43,10 +43,20 @@ const HESITATION_VARIANTS = [
 // du discours francais, on ne les touche pas pour eviter les faux positifs.
 const UNKNOWN_HESITATION_TO_FP = /\b(pff+|tss+|hmpf+)\b/gi;
 
+// Preserve la majuscule initiale du mot reconnu (ex. "Oh" en debut de
+// phrase doit rester "Oh", pas devenir "oh") - la casse naturelle de
+// Whisper ne doit jamais etre ecrasee, y compris par cette canonisation.
+function matchCase(original, replacement) {
+  if (original[0] && original[0] === original[0].toUpperCase() && original[0] !== original[0].toLowerCase()) {
+    return replacement[0].toUpperCase() + replacement.slice(1);
+  }
+  return replacement;
+}
+
 export function canonicalizeHesitations(text) {
   let result = text;
   for (const { canonical, pattern } of HESITATION_VARIANTS) {
-    result = result.replace(pattern, canonical);
+    result = result.replace(pattern, (match) => matchCase(match, canonical));
   }
   result = result.replace(UNKNOWN_HESITATION_TO_FP, '[fp]');
   // Si deux pauses pleines [fp] se suivent, on ne transcrit [fp] qu'une seule
@@ -131,9 +141,9 @@ const ROMAN_STRICT = /^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/;
 // mais qui sont, en pratique, des abreviations francaises/internationales
 // bien plus frequentes que leur usage numeral : CD (disque), CV
 // (curriculum vitae), IV (intraveineuse), XL (taille de vetement), MC
-// (animateur), DC (Washington DC...). On ne les convertit jamais, meme si
-// ROMAN_STRICT les validerait.
-const NON_NUMERAL_ABBREVIATIONS = new Set(['CD', 'CV', 'IV', 'XL', 'MC', 'DC']);
+// (animateur), DC (Washington DC...), MD (docteur en medecine). On ne les
+// convertit jamais, meme si ROMAN_STRICT les validerait.
+const NON_NUMERAL_ABBREVIATIONS = new Set(['CD', 'CV', 'IV', 'XL', 'MC', 'DC', 'MD']);
 
 function romanToInt(roman) {
   let total = 0;
@@ -202,17 +212,40 @@ function convertArobase(text) {
   return text.replace(/\b(?:arobase|arobas|arrobase|arrobas)\b/gi, '@');
 }
 
+// Chiffre arabe + suffixe ordinal colle ("5e", "21e", "3e", "100e"...) :
+// tres frequent (etages, siecles, arrondissements) et doit etre traite
+// AVANT la conversion cardinale generique sinon "5e" devient "cinqe" (mot
+// invente) au lieu de "cinquieme".
+function convertDigitOrdinals(text) {
+  return text.replace(/\b(\d+)(e|ème)\b/g, (fullMatch, digits) => {
+    const value = parseInt(digits, 10);
+    return cardinalToOrdinalWord(value, numberToFrenchWords(value));
+  });
+}
+
+// Remplace % (et un eventuel espace AVANT, ex. "50 %") par "pour cent".
+// On ne touche jamais a ce qui suit % : cet espace-la appartient souvent a
+// une regle de ponctuation francaise sans rapport (espace avant ?!;:), pas
+// au %, et la toucher casserait l'espacement naturel de Whisper.
+function replacePercent(text) {
+  return text.replace(/\s*%/g, (match, offset, str) => {
+    const before = str[offset - 1] || '';
+    const leading = /\w/.test(before) ? ' ' : '';
+    return `${leading}pour cent`;
+  });
+}
+
 // Ecrit en lettres les chiffres arabes, les chiffres romains et le symbole
 // % - a la demande explicite de l'utilisateur. N'touche a aucun autre
 // symbole (€, $, &...) qui n'a pas ete demande.
 export function spellOutNumbersAndSymbols(text) {
-  let result = text.replace(/\d+/g, (m) => numberToFrenchWords(m));
+  let result = convertDigitOrdinals(text);
+  result = result.replace(/\d+/g, (m) => numberToFrenchWords(m));
   result = convertOrdinalFirst(result);
   result = convertRomanNumerals(result);
-  result = result.replace(/%/g, ' pour cent ');
+  result = replacePercent(result);
   result = convertArobase(result);
-  result = result.replace(/[ \t]+/g, ' ').trim();
-  return result.replace(/ +([,.;:!?])/g, '$1');
+  return result.replace(/[ \t]+/g, ' ').trim();
 }
 
 // Seuils heuristiques (a ajuster selon l'experience terrain) : un segment
