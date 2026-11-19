@@ -26,7 +26,7 @@ const fileName = filePath.split(/[\\/]/).pop();
 
 const form = new FormData();
 form.append('file', new Blob([fileBuffer]), fileName);
-form.append('model', 'whisper-large-v3');
+form.append('model', 'whisper-large-v3-turbo');
 form.append('language', 'fr');
 form.append('response_format', 'verbose_json');
 form.append('prompt', prompt || DISFLUENCY_PRIMING_PROMPT);
