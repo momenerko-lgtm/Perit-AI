@@ -241,6 +241,10 @@ function replacePercent(text) {
 // Ecrit en lettres les chiffres arabes, les chiffres romains et le symbole
 // % - a la demande explicite de l'utilisateur. N'touche a aucun autre
 // symbole (€, $, &...) qui n'a pas ete demande.
+// Non utilisee dans le pipeline actif (voir convertSpokenSymbols) suite a
+// une demande inverse de l'utilisateur ("je veux que tous les chiffres
+// soient en chiffres") - gardee au cas ou ce choix serait a nouveau
+// inverse plus tard.
 export function spellOutNumbersAndSymbols(text) {
   let result = convertDigitOrdinals(text);
   result = result.replace(/\d+/g, (m) => numberToFrenchWords(m));
@@ -249,6 +253,14 @@ export function spellOutNumbersAndSymbols(text) {
   result = replacePercent(result);
   result = convertArobase(result);
   return result.replace(/[ \t]+/g, ' ').trim();
+}
+
+// Pipeline actif pour les nombres/symboles : les chiffres (0,5 / $552 /
+// 50% / XIV...) restent exactement comme Whisper les a ecrits - aucune
+// conversion en lettres. Seul "arobase"/"arobas" -> "@" est conserve, car
+// ce n'est pas un nombre et n'a rien a voir avec cette demande.
+export function convertSpokenSymbols(text) {
+  return convertArobase(text).replace(/[ \t]+/g, ' ').trim();
 }
 
 // Seuils heuristiques (a ajuster selon l'experience terrain) : un segment
@@ -315,7 +327,7 @@ export function processGroqResponse(data) {
   for (const pattern of KNOWN_HALLUCINATIONS) {
     rawText = rawText.replace(pattern, '').trim();
   }
-  return spellOutNumbersAndSymbols(straightenApostrophes(canonicalizeHesitations(rawText)));
+  return convertSpokenSymbols(straightenApostrophes(canonicalizeHesitations(rawText)));
 }
 
 export { FIXED_HESITATIONS };
