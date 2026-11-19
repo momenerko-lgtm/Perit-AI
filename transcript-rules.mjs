@@ -20,8 +20,11 @@ const FIXED_HESITATIONS = ['mhm', 'uh-huh', 'hmm', 'euh', 'euhm', 'mm-mm', 'nan-
 // Echantillon de style passe au parametre "prompt" de l'API Whisper pour
 // inciter le modele a conserver les hesitations plutot que de lisser la
 // transcription (reduit le risque d'OMISSION d'un "euh"/"hmm" reellement
-// prononce, avant meme que notre code ne voie le texte).
-export const DISFLUENCY_PRIMING_PROMPT = "Euh, alors, je dirais que, hmm, c'est-à-dire, mhm, voilà, enfin bref.";
+// prononce, avant meme que notre code ne voie le texte). Inclut aussi des
+// decimaux avec zero initial (0,5 - 0,9) : Whisper a tendance a l'omettre
+// (ecrit ",5" au lieu de "0,5"), ce que notre code ne peut pas rattraper
+// une fois le zero deja absent du texte recu.
+export const DISFLUENCY_PRIMING_PROMPT = "Euh, alors, je dirais que, hmm, c'est-à-dire, mhm, voilà, enfin bref. Les valeurs étaient de 0,5, 0,7 et 0,9.";
 
 // Variantes courantes que Whisper sort en texte libre -> forme fixe du client.
 // Liste volontairement limitee a des sons non lexicaux sans ambiguite ; on
