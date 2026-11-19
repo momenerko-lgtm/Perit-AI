@@ -272,6 +272,10 @@ function isLowConfidence(segment) {
 const KNOWN_HALLUCINATIONS = [
   /sous-titrage\s+(?:société\s+)?radio-canada/i,
   /sous-titr(?:age|es?)\s+(?:réalisés?\s+)?par\s+la\s+communauté\s+d'amara\.org/i,
+  // Variante "Sous-titrage ST' 501" (code numerique variable) - detectee
+  // ICI, avant la conversion des chiffres en lettres, sinon elle devient
+  // mefiante a reperer ("cinq cent un" au lieu de "501").
+  /sous-titrage\s+st'?\s*\d*/i,
 ];
 
 function isKnownHallucination(text) {
